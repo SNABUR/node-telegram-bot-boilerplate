@@ -8,7 +8,7 @@
  *
  */
 import bot from "./telegraf";
-import config from "@configs/config";
+import config from "../configs/config";
 import fs from "fs";
 import localtunnel from "localtunnel";
 

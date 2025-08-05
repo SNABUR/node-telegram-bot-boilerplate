@@ -94,7 +94,7 @@ Deploy bot to your server and:
 1. Run with correct values: `npm run init:token --token asdfghjkl`
 2. Run init `npm run init`
 3. Generate release `npm run release`
-4. Start bot `npm run start-pm2`
+4. Start bot `npm run start`
 
 ### 🐳 Docker
 

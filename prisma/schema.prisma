@@ -1,0 +1,115 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../app/generated/prisma"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+model BlockProgress {
+    id              Int      @id @default(autoincrement())
+    network         String   @unique
+    lastBlockHeight BigInt
+    updatedAt       DateTime @updatedAt
+}
+
+model EventTracking {
+    id              Int      @id @default(autoincrement())
+    eventType       String
+    blockHeight     BigInt
+    transactionHash String
+    processed       Boolean  @default(false)
+    error           String?
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @default(now())
+    network         String
+    sequenceNumber  String?
+
+    @@unique([network, transactionHash, sequenceNumber, eventType])
+    @@index([network, blockHeight])
+    @@index([network, eventType])
+    @@index([network])
+    @@index([network, processed])
+}
+
+model Token {
+    id      Int    @id @default(autoincrement())
+    network String
+
+    address        String
+    wrappedAddress String? @unique
+
+    symbol   String
+    name     String
+    decimals Int
+
+    pairsAsToken0 Pair[] @relation("token0")
+    pairsAsToken1 Pair[] @relation("token1")
+
+    createdAt DateTime @default(now())
+
+    @@unique([network, address])
+}
+
+model Pair {
+    id Int @id @default(autoincrement())
+
+    network String
+
+    token0Id Int
+    token1Id Int
+
+    spikeyAmmPairAddress String?
+
+    spikeyAmmReserve0 BigInt?
+    spikeyAmmReserve1 BigInt?
+    lastStatsUpdate   DateTime?
+
+    token0 Token @relation("token0", fields: [token0Id], references: [id])
+    token1 Token @relation("token1", fields: [token1Id], references: [id])
+
+    ohlcData OhlcData[]
+
+    createdAt DateTime @default(now())
+
+    @@unique([network, token0Id, token1Id])
+    @@unique([network, spikeyAmmPairAddress])
+    @@index([token0Id])
+    @@index([token1Id])
+}
+
+model OhlcData {
+    id Int @id @default(autoincrement())
+
+    network   String
+    ammSource String
+    timeframe String
+    timestamp DateTime
+
+    open       Decimal
+    high       Decimal
+    low        Decimal
+    close      Decimal
+    volume     Decimal
+    tradeCount Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pairId Int
+    pair   Pair @relation(fields: [pairId], references: [id])
+
+    @@unique([network, ammSource, pairId, timeframe, timestamp])
+    @@index([pairId])
+    @@index([timestamp])
+}
+
+model UserPreference {
+    id                  Int     @id @default(autoincrement())
+    userId              BigInt  @unique // Telegram user ID
+    defaultTokenAddress String? // The address of the non-SupraCoin token
+    defaultTimeframe    String? // e.g., "1m", "5m", "1h"
+}

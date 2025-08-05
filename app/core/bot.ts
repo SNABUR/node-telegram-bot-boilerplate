@@ -5,7 +5,7 @@ import * as hears from "@app/functions/hears";
  * Start bot
  * =====================
  *
- * @contributors: Patryk Rzucidło [@ptkdev] <support@ptkdev.io> (https://ptk.dev)
+ * @contributors: Patryk Rzucidło [@ptkdev] <support@ptk.dev> (https://ptk.dev)
  *
  * @license: MIT License
  *
@@ -14,6 +14,11 @@ import * as hears from "@app/functions/hears";
 	await command.quit();
 	await command.start();
 	await command.sendPhoto();
+	await command.price();
+	await command.help();
+	await command.setToken();
+	await command.setTimeframe();
+	await command.chart();
 	await hears.text();
 	await command.launch();
 })();
