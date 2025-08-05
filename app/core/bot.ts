@@ -19,6 +19,7 @@ import * as hears from "@app/functions/hears";
 	await command.setToken();
 	await command.setTimeframe();
 	await command.chart();
+	await command.spike();
 	await hears.text();
 	await command.launch();
 })();

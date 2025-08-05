@@ -17,6 +17,7 @@ import { generateOhlcChart } from "./chartGenerator";
 const prisma = new PrismaClient();
 
 const SUPRA_COIN_ADDRESS = "0x1::supra_coin::SupraCoin";
+const SPIKE_TOKEN_ADDRESS = "0xfec116479f1fd3cb9732cc768e6061b0e45b178a610b9bc23c2143a6493e794::memecoins::SPIKE";
 
 // Helper function to get user preferences
 const getUserPreference = async (userId: bigint): Promise<UserPreference | null> => {
@@ -298,6 +299,94 @@ const chart = async (): Promise<void> => {
 };
 
 /**
+ * command: /spike
+ * =====================
+ * Display price chart for SPIKE token
+ *
+ */
+const spike = async (): Promise<void> => {
+	bot.command("spike", async (ctx) => {
+		const userId = BigInt(ctx.from.id);
+		const targetTokenAddress = SPIKE_TOKEN_ADDRESS;
+		const targetTimeframe = "1m"; // Default to 1m for /spike
+
+		try {
+			const userPref = await getUserPreference(userId);
+
+			const tokenAddress = targetTokenAddress || userPref?.defaultTokenAddress;
+			const timeframe = targetTimeframe || userPref?.defaultTimeframe || "1m";
+
+			if (!tokenAddress) {
+				ctx.reply(
+					"Please specify a token address (e.g., /chart <token_address>) or set a default with /settoken.",
+				);
+				return;
+			}
+
+			const supraCoin = await prisma.token.findFirst({
+				where: { address: SUPRA_COIN_ADDRESS },
+			});
+
+			if (!supraCoin) {
+				ctx.reply("SupraCoin not found in database. Please check configuration.");
+				return;
+			}
+
+			const targetToken = await prisma.token.findFirst({
+				where: { address: tokenAddress },
+			});
+
+			if (!targetToken) {
+				ctx.reply("Target token not found. Please provide a valid token address.");
+				return;
+			}
+
+			const pair = await prisma.pair.findFirst({
+				where: {
+					OR: [
+						{ token0Id: supraCoin.id, token1Id: targetToken.id },
+						{ token0Id: targetToken.id, token1Id: supraCoin.id },
+					],
+				},
+			});
+
+			if (!pair) {
+				ctx.reply(`Pair for ${targetToken.symbol}/${supraCoin.symbol} not found.`);
+				return;
+			}
+
+			const ohlcData = await prisma.ohlcData.findMany({
+				where: {
+					pairId: pair.id,
+					timeframe: timeframe,
+				},
+				orderBy: {
+					timestamp: "asc",
+				},
+				take: 100,
+			});
+
+			if (ohlcData.length === 0) {
+				ctx.reply(
+					`No OHLC data available for ${targetToken.symbol}/${supraCoin.symbol} in ${timeframe} timeframe.`,
+				);
+				return;
+			}
+
+			const chartBuffer = await generateOhlcChart(ohlcData);
+
+			await ctx.replyWithPhoto(
+				{ source: chartBuffer },
+				{ caption: `Price Chart for ${targetToken.symbol}/${supraCoin.symbol} (${timeframe})` },
+			);
+		} catch (error) {
+			console.error("Error generating chart:", error);
+			ctx.reply("An error occurred while generating the chart.");
+		}
+	});
+};
+
+/**
  * command: /help
  * =====================
  * Display available commands
@@ -317,6 +406,8 @@ const help = async (): Promise<void> => {
 			`/photo - Get a random photo
 ` +
 			`/chart [token_address] [timeframe] - Display price chart
+` +
+			`/spike - Display price chart for SPIKE token (1m timeframe)
 ` +
 			`/settoken <token_address> - Set your default token for charts
 ` +
@@ -342,5 +433,5 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { launch, quit, sendPhoto, start, price, help, setToken, setTimeframe, chart };
+export { launch, quit, sendPhoto, start, price, help, setToken, setTimeframe, chart, spike };
 export default launch;
