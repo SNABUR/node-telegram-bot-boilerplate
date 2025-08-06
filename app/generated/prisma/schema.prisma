@@ -42,9 +42,11 @@ model Token {
   address        String
   wrappedAddress String? @unique
 
-  symbol   String
-  name     String
-  decimals Int
+  symbol            String
+  name              String
+  decimals          Int
+  maxSupply         BigInt?
+  circulatingSupply BigInt?
 
   pairsAsToken0 Pair[] @relation("token0")
   pairsAsToken1 Pair[] @relation("token1")

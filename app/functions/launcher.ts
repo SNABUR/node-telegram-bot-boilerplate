@@ -13,7 +13,7 @@ import fs from "fs";
 import localtunnel from "localtunnel";
 
 const launchPolling = (): void => {
-	bot.launch();
+	bot.launch({ polling: config.poll } as any);
 };
 
 const launchSelfSigned = async (webhookUrl: string, secretPath: string) => {

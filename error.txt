@@ -1,0 +1,19 @@
+Error generating chart: TelegramError: 400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+    at Telegram.callApi (D:\telegram_bot\node_modules\telegraf\lib\core\network\client.js:263:19)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  response: {
+    ok: false,
+    error_code: 400,
+    description: 'Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
+  },
+  on: {
+    method: 'editMessageMedia',
+    payload: {
+      chat_id: 1755265025,
+      message_id: 66,
+      inline_message_id: undefined,
+      media: [Object],
+      reply_markup: [Object]
+    }
+  }
+}
