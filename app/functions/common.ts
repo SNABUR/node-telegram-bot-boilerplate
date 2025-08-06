@@ -36,18 +36,19 @@ export const isAdmin = async (ctx: any): Promise<boolean> => {
 	return ["administrator", "creator"].includes(member.status);
 };
 
-export const calculateMarketCap = async (tokenAddress: string): Promise<number | null> => {
+export const calculateMarketCap = async (tokenAddress: string): Promise<{ marketCap: number | null; maxSupply: number | null }> => {
 	try {
 		const targetToken = await prisma.token.findFirst({
 			where: { address: tokenAddress },
 			select: {
 				id: true,
 				circulatingSupply: true,
+				maxSupply: true,
 			},
 		});
 
 		if (!targetToken || targetToken.circulatingSupply === null) {
-			return null; // No se puede calcular el MCAP sin maxSupply
+			return { marketCap: null, maxSupply: null }; // No se puede calcular el MCAP sin maxSupply
 		}
 
 		// Encontrar el par del token con SupraCoin
@@ -58,7 +59,7 @@ export const calculateMarketCap = async (tokenAddress: string): Promise<number |
 
 		if (!supraCoin) {
 			console.error("SupraCoin not found in database for MCAP calculation.");
-			return null;
+			return { marketCap: null, maxSupply: null };
 		}
 
 		const pair = await prisma.pair.findFirst({
@@ -72,7 +73,7 @@ export const calculateMarketCap = async (tokenAddress: string): Promise<number |
 		});
 
 		if (!pair) {
-			return null; // No se encontró el par para el cálculo del precio
+			return { marketCap: null, maxSupply: null }; // No se encontró el par para el cálculo del precio
 		}
 
 		// Obtener el último precio de cierre del token contra Supra
@@ -90,7 +91,7 @@ export const calculateMarketCap = async (tokenAddress: string): Promise<number |
 		});
 
 		if (!latestOhlc) {
-			return null; // No hay datos de precio OHLC
+			return { marketCap: null, maxSupply: null }; // No hay datos de precio OHLC
 		}
 
 		const tokenPriceInSupra = parseFloat(latestOhlc.close.toString());
@@ -98,9 +99,11 @@ export const calculateMarketCap = async (tokenAddress: string): Promise<number |
 		const circulatingSupply = parseFloat(targetToken.circulatingSupply.toString());
 
 		const marketCap = tokenPriceInSupra * supraPriceInUsd * circulatingSupply;
-		return marketCap;
+		const maxSupply = targetToken.maxSupply ? parseFloat(targetToken.maxSupply.toString()) : null;
+
+		return { marketCap, maxSupply };
 	} catch (error) {
 		console.error("Error calculating market cap:", error);
-		return null;
+		return { marketCap: null, maxSupply: null };
 	}
 };

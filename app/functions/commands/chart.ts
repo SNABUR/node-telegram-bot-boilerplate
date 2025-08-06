@@ -73,13 +73,16 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 		const chartBuffer = await generateOhlcChart(ohlcData);
 
 		// Calculate Market Cap
-		const marketCap = await calculateMarketCap(tokenAddress);
+		const { marketCap, maxSupply } = await calculateMarketCap(tokenAddress);
 		let caption = `Price Chart for ${targetToken.symbol}/${supraCoin.symbol} (${timeframe})`;
 		if (marketCap !== null) {
 			caption += `\nMarket Cap: ${marketCap.toLocaleString(undefined, {
 				minimumFractionDigits: 2,
 				maximumFractionDigits: 2,
 			})}`;
+		}
+		if (maxSupply !== null) {
+			caption += `\nMax Supply: ${maxSupply.toLocaleString()}`;
 		}
 		const reply_markup = {
 			inline_keyboard: [
