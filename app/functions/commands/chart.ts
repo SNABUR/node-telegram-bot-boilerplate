@@ -12,6 +12,12 @@ import {
 	calculateMarketCap,
 } from "../common.js";
 
+// Helper function to escape special characters for MarkdownV2
+const escapeMarkdownV2 = (text: string): string => {
+	const specialChars = /[_*[\]()~`#+\-=|{}.!]/g;
+	return text.replace(specialChars, "\\$&");
+};
+
 export const sendChart = async (ctx: any, tokenAddress: string, timeframe: string, isUpdate = false) => {
 	try {
 		// Find SupraCoin token
@@ -71,19 +77,42 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			return;
 		}
 
+		// Calculate additional metrics
+		const latestOhlc = ohlcData[ohlcData.length - 1];
+		const firstOhlc = ohlcData[0];
+
+		const currentPrice = latestOhlc.close.toNumber();
+		const priceChange =
+			((latestOhlc.close.toNumber() - firstOhlc.open.toNumber()) / firstOhlc.open.toNumber()) * 100;
+		const lastUpdate = latestOhlc.timestamp;
+
 		// Generate chart
 		const chartBuffer = await generateOhlcChart(ohlcData);
 
 		// Calculate Market Cap
 		const { marketCap, maxSupply } = await calculateMarketCap(tokenAddress);
-		let caption = `Price Chart for ${targetToken.symbol}/${supraCoin.symbol} (${timeframe})`;
-		if (marketCap !== null) {
-			caption += `\nMarket Cap: ${marketCap.toLocaleString(undefined, {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-			})}`;
-		}
-		caption += `\nMax Supply: ${maxSupply !== null ? maxSupply.toLocaleString() : 0}`;
+
+		// Build caption with structured format and emojis
+		// Build caption with structured format and emojis
+		let caption = `📊 *${escapeMarkdownV2(targetToken.symbol)} Price Information*\n\n`;
+		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \\= ${escapeMarkdownV2(
+			currentPrice !== 0
+				? (1 / currentPrice).toFixed(targetToken.decimals > 8 ? 8 : targetToken.decimals)
+				: "N/A",
+		)} ${escapeMarkdownV2(targetToken.symbol)}\n`;
+		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \\= ${escapeMarkdownV2(
+			currentPrice.toFixed(8),
+		)} ${escapeMarkdownV2(supraCoin.symbol)}\n`;
+		caption += `💹 *Market Cap:* \\$${escapeMarkdownV2(
+			marketCap !== null
+				? marketCap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+				: "0",
+		)}\n`;
+		caption += `🔢 *Supply:* ${escapeMarkdownV2(maxSupply !== null ? maxSupply.toLocaleString() : "0")}\n\n`;
+		caption += `📈 *Price Changes*\n`;
+		caption += `• ${timeframe}: ${escapeMarkdownV2(priceChange.toFixed(2))}%${priceChange >= 0 ? " 🚀" : " 📉"}\n`;
+		caption += `⏰ *Last Updated:* ${escapeMarkdownV2(lastUpdate.toLocaleString())}`;
+
 		const reply_markup = {
 			inline_keyboard: [
 				[
@@ -108,6 +137,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 						type: "photo",
 						media: { source: chartBuffer },
 						caption: caption,
+						parse_mode: "MarkdownV2",
 					},
 					{
 						reply_markup: reply_markup,
@@ -119,6 +149,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 					{ source: chartBuffer },
 					{
 						caption: caption,
+						parse_mode: "MarkdownV2",
 						reply_markup: reply_markup,
 						reply_to_message_id: ctx.message?.message_id,
 						message_thread_id: ctx.message?.message_thread_id,
@@ -127,10 +158,19 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			}
 		} catch (error: any) {
 			if (error.message.includes("message is not modified")) {
-				await ctx.answerCbQuery("Chart is already up to date.");
+				if (isUpdate) {
+					await ctx.answerCbQuery("Chart is already up to date.");
+				}
 			} else {
 				console.error("Error updating chart:", error);
-				await ctx.answerCbQuery("An error occurred while updating the chart.");
+				if (isUpdate) {
+					await ctx.answerCbQuery("An error occurred while updating the chart.");
+				} else {
+					await ctx.reply("An error occurred while updating the chart.", {
+						reply_to_message_id: ctx.message?.message_id,
+						message_thread_id: ctx.message?.message_thread_id,
+					});
+				}
 			}
 		}
 	} catch (error) {
@@ -150,7 +190,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
  * command: /chart
  * =====================
  * Display price chart for a token pair
- *
  */
 export const chart = async (): Promise<void> => {
 	bot.command("chart", async (ctx: any) => {
@@ -208,7 +247,6 @@ const createTokenChartCommand = (tokenAddress: string) => {
  * command: /spike
  * =====================
  * Display price chart for SPIKE token
- *
  */
 export const spike = async (): Promise<void> => {
 	bot.command("spike", createTokenChartCommand(SPIKE_TOKEN_ADDRESS));
@@ -218,7 +256,6 @@ export const spike = async (): Promise<void> => {
  * command: /josh
  * =====================
  * Display price chart for JOSH token
- *
  */
 export const josh = async (): Promise<void> => {
 	bot.command("josh", createTokenChartCommand(JOSH_TOKEN_ADDRESS));
@@ -228,7 +265,6 @@ export const josh = async (): Promise<void> => {
  * command: /babyjosh
  * =====================
  * Display price chart for BABYJOSH token
- *
  */
 export const babyjosh = async (): Promise<void> => {
 	bot.command("babyjosh", createTokenChartCommand(BABYJOSH_TOKEN_ADDRESS));
