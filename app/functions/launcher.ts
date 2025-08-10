@@ -7,13 +7,13 @@
  * @license: MIT License
  *
  */
-import bot from "./telegraf";
-import config from "../configs/config";
+import bot from "./telegraf.js";
+import config from "../configs/config.js";
 import fs from "fs";
 import localtunnel from "localtunnel";
 
-const launchPolling = (): void => {
-	bot.launch({ polling: config.poll } as any);
+const launchPolling = async (): Promise<void> => {
+	await bot.launch({ polling: config.poll } as any);
 };
 
 const launchSelfSigned = async (webhookUrl: string, secretPath: string) => {
@@ -27,11 +27,12 @@ const launchSelfSigned = async (webhookUrl: string, secretPath: string) => {
 	};
 	await bot.launch({
 		webhook: {
-			tlsOptions,
-			hookPath: secretPath,
-			port: port,
-		},
-	});
+							domain: webhookUrl,
+				tlsOptions,
+				hookPath: secretPath,
+				port: port,
+			},
+		});
 	bot.telegram.setWebhook(`${webhookUrl}${secretPath}`, {
 		certificate: {
 			source: cert,

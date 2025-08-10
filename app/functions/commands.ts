@@ -8,14 +8,15 @@
  *
  */
 
-import config from "@configs/config";
-import { launchPolling, launchWebhook } from "./launcher";
+import config from "../configs/config.js";
+import { launchPolling, launchWebhook } from "./launcher.js";
 
 // Import and re-export all command modules
-export * from "./commands/basic";
-export * from "./commands/chart";
-export * from "./commands/preferences";
-export * from "./callbacks/chart";
+export * from "./commands/basic.js";
+export * from "./commands/chart.js";
+export * from "./commands/preferences.js";
+export * from "./commands/price.js";
+export * from "./callbacks/chart.js";
 
 /**
  * Run bot

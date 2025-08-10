@@ -7,7 +7,7 @@
  * @license: MIT License
  *
  */
-import m from "../functions/module";
+import m from "../functions/module.js";
 
 test("show hello world", async () => {
 	const { app } = await m({ text: "hello-world" });

@@ -1,7 +1,6 @@
-import { PrismaClient, UserPreference } from "@app/generated/prisma";
-import config from "@configs/config";
-
-export const prisma = new PrismaClient();
+import config from "../configs/config.js";
+import prisma from "../lib/prisma.js";
+import { UserPreference } from "@app/generated/prisma/index.js";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
 export const SPIKE_TOKEN_ADDRESS = config.tokens.SPIKE_TOKEN_ADDRESS;
@@ -36,7 +35,9 @@ export const isAdmin = async (ctx: any): Promise<boolean> => {
 	return ["administrator", "creator"].includes(member.status);
 };
 
-export const calculateMarketCap = async (tokenAddress: string): Promise<{ marketCap: number | null; maxSupply: number | null }> => {
+export const calculateMarketCap = async (
+	tokenAddress: string,
+): Promise<{ marketCap: number | null; maxSupply: number | null }> => {
 	try {
 		const targetToken = await prisma.token.findFirst({
 			where: { address: tokenAddress },

@@ -1,19 +1,53 @@
-Error generating chart: TelegramError: 400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
-    at Telegram.callApi (D:\telegram_bot\node_modules\telegraf\lib\core\network\client.js:263:19)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5) {
-  response: {
-    ok: false,
-    error_code: 400,
-    description: 'Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
-  },
-  on: {
-    method: 'editMessageMedia',
-    payload: {
-      chat_id: 1755265025,
-      message_id: 66,
-      inline_message_id: undefined,
-      media: [Object],
-      reply_markup: [Object]
-    }
-  }
-}
+import { Chart, registerables } from "chart.js";
+import { createCanvas } from "canvas";
+import { OhlcData } from "@app/generated/prisma";
+
+Chart.register(...registerables);
+
+export const generateOhlcChart = async (ohlcData: OhlcData[]): Promise<Buffer> => {
+    const labels: string[] = [];
+    const closePrices: number[] = [];
+
+    ohlcData.forEach(data => {
+        labels.push(data.timestamp.toLocaleTimeString());
+        closePrices.push(data.close.toNumber());
+    });
+
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext("2d");
+
+    new Chart(ctx as any, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Close Price",
+                    data: closePrices,
+                    borderColor: "rgb(75, 192, 192)",
+                    tension: 0.1,
+                },
+            ],
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Time",
+                    },
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: "Price",
+                    },
+                },
+            },
+        },
+    });
+
+    return canvas.toBuffer("image/png");
+};

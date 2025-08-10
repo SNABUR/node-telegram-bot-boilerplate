@@ -1,6 +1,6 @@
-import bot from "@app/functions/telegraf";
-import { prisma } from "@app/functions/common";
-import { sendChart } from "@app/functions/commands/chart";
+import bot from "../telegraf.js";
+import prisma from "../../lib/prisma.js";
+import { sendChart } from "../commands/chart.js";
 
 /**
  * callback_query: chart
@@ -9,8 +9,11 @@ import { sendChart } from "@app/functions/commands/chart";
  *
  */
 export const chartCallback = async (): Promise<void> => {
-	bot.on("callback_query", async (ctx) => {
-		const callbackData = (ctx.callbackQuery as any).data;
+	bot.on("callback_query" as any, async (ctx: any) => {
+		if (!ctx.callbackQuery) {
+			return;
+		}
+		const callbackData = ctx.callbackQuery.data;
 		if (!callbackData || !callbackData.startsWith("chart_")) {
 			return;
 		}

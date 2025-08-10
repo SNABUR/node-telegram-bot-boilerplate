@@ -1,5 +1,7 @@
-import bot from "@app/functions/telegraf";
-import { prisma, setUserPreference, isAdmin } from "@app/functions/common";
+import bot from "../telegraf.js";
+import { Context } from "telegraf";
+import { setUserPreference, isAdmin } from "../common.js";
+import prisma from "../../lib/prisma.js";
 
 /**
  * command: /settoken
@@ -8,18 +10,25 @@ import { prisma, setUserPreference, isAdmin } from "@app/functions/common";
  *
  */
 export const setToken = async (): Promise<void> => {
-	bot.command("settoken", async (ctx) => {
+	bot.command("settoken", async (ctx: any) => {
+		if (!ctx.message) {
+			return;
+		}
 		if (!(await isAdmin(ctx))) {
-			return ctx.reply("Sorry, only admins can use this command.", {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			return ctx.telegram.sendMessage(ctx.message.chat.id, "Sorry, only admins can use this command.");
+		}
+		if (!("text" in ctx.message)) {
+			return ctx.telegram.sendMessage(ctx.message.chat.id, "Please send a text message with the token address.");
 		}
 		const args = ctx.message.text.split(" ");
 		if (args.length < 2) {
-			ctx.reply("Usage: /settoken <token_address>", { reply_to_message_id: ctx.message.message_id });
+			ctx.telegram.sendMessage(ctx.message.chat.id, "Usage: /settoken <token_address>");
 			return;
 		}
 		const tokenAddress = args[1];
+		if (!ctx.from) {
+			return;
+		}
 		const userId = BigInt(ctx.from.id);
 
 		try {
@@ -28,21 +37,15 @@ export const setToken = async (): Promise<void> => {
 			});
 
 			if (!token) {
-				ctx.reply("Token not found. Please provide a valid token address.", {
-					reply_to_message_id: ctx.message.message_id,
-				});
+				ctx.telegram.sendMessage(ctx.message.chat.id, "Token not found. Please provide a valid token address.");
 				return;
 			}
 
 			await setUserPreference(userId, { defaultTokenAddress: tokenAddress });
-			ctx.reply(`Default token set to ${token.symbol} (${tokenAddress}).`, {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			ctx.telegram.sendMessage(ctx.message.chat.id, `Default token set to ${token.symbol} (${tokenAddress}).`);
 		} catch (error) {
 			console.error("Error setting default token:", error);
-			ctx.reply("An error occurred while setting your default token.", {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			ctx.telegram.sendMessage(ctx.message.chat.id, "An error occurred while setting your default token.");
 		}
 	});
 };
@@ -54,39 +57,43 @@ export const setToken = async (): Promise<void> => {
  *
  */
 export const setTimeframe = async (): Promise<void> => {
-	bot.command("settimeframe", async (ctx) => {
+	bot.command("settimeframe", async (ctx: any) => {
+		if (!ctx.message) {
+			return;
+		}
 		if (!(await isAdmin(ctx))) {
-			return ctx.reply("Sorry, only admins can use this command.", {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			return ctx.telegram.sendMessage(ctx.message.chat.id, "Sorry, only admins can use this command.");
+		}
+		if (!("text" in ctx.message)) {
+			return ctx.telegram.sendMessage(ctx.message.chat.id, "Please send a text message with the timeframe.");
 		}
 		const args = ctx.message.text.split(" ");
 		if (args.length < 2) {
-			ctx.reply("Usage: /settimeframe <timeframe> (e.g., 1m, 5m, 1h)", {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			ctx.telegram.sendMessage(ctx.message.chat.id, "Usage: /settimeframe <timeframe> (e.g., 1m, 5m, 1h)");
 			return;
 		}
 		const timeframe = args[1];
+		if (!ctx.from) {
+			return;
+		}
 		const userId = BigInt(ctx.from.id);
 
 		// Basic validation for timeframe
 		const validTimeframes = ["1m", "5m", "1h", "1d"]; // Add more as needed
 		if (!validTimeframes.includes(timeframe)) {
-			ctx.reply(`Invalid timeframe. Please use one of: ${validTimeframes.join(", ")}`, {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			ctx.telegram.sendMessage(
+				ctx.message.chat.id,
+				`Invalid timeframe. Please use one of: ${validTimeframes.join(", ")}`,
+			);
 			return;
 		}
 
 		try {
 			await setUserPreference(userId, { defaultTimeframe: timeframe });
-			ctx.reply(`Default timeframe set to ${timeframe}.`, { reply_to_message_id: ctx.message.message_id });
+			ctx.telegram.sendMessage(ctx.message.chat.id, `Default timeframe set to ${timeframe}.`);
 		} catch (error) {
 			console.error("Error setting default timeframe:", error);
-			ctx.reply("An error occurred while setting your default timeframe.", {
-				reply_to_message_id: ctx.message.message_id,
-			});
+			ctx.telegram.sendMessage(ctx.message.chat.id, "An error occurred while setting your default timeframe.");
 		}
 	});
 };

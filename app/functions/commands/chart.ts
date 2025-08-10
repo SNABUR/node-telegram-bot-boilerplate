@@ -1,14 +1,16 @@
-import bot from "@app/functions/telegraf";
-import { generateOhlcChart } from "@app/functions/chartGenerator";
+import bot from "../telegraf.js";
+import { generateOhlcChart } from "../chartGenerator.js";
+import { Context } from "telegraf";
+import prisma from "../../lib/prisma.js";
+
 import {
-	prisma,
 	SUPRA_COIN_ADDRESS,
 	SPIKE_TOKEN_ADDRESS,
 	JOSH_TOKEN_ADDRESS,
 	BABYJOSH_TOKEN_ADDRESS,
 	getUserPreference,
 	calculateMarketCap,
-} from "@app/functions/common";
+} from "../common.js";
 
 export const sendChart = async (ctx: any, tokenAddress: string, timeframe: string, isUpdate = false) => {
 	try {
@@ -81,9 +83,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 				maximumFractionDigits: 2,
 			})}`;
 		}
-		if (maxSupply !== null) {
-			caption += `\nMax Supply: ${maxSupply.toLocaleString()}`;
-		}
+		caption += `\nMax Supply: ${maxSupply !== null ? maxSupply.toLocaleString() : 0}`;
 		const reply_markup = {
 			inline_keyboard: [
 				[
@@ -93,7 +93,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 					},
 				],
 				[
-					{ text: "1m", callback_data: `chart_timeframe_${targetToken.id}_1m` },
 					{ text: "5m", callback_data: `chart_timeframe_${targetToken.id}_5m` },
 					{ text: "1h", callback_data: `chart_timeframe_${targetToken.id}_1h` },
 					{ text: "1d", callback_data: `chart_timeframe_${targetToken.id}_1d` },
@@ -148,66 +147,22 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 };
 
 /**
- * command: /price
- * =====================
- * Get OHLC price data
- *
- */
-export const price = async (): Promise<void> => {
-	bot.command("price", async (ctx) => {
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
-		try {
-			const latestOhlc = await prisma.ohlcData.findFirst({
-				orderBy: {
-					timestamp: "desc",
-				},
-				include: {
-					pair: {
-						include: {
-							token0: true,
-							token1: true,
-						},
-					},
-				},
-			});
-
-			if (latestOhlc) {
-				const message =
-					`Latest Price for ${latestOhlc.pair.token0.symbol}/${latestOhlc.pair.token1.symbol}:\n` +
-					`Open: ${latestOhlc.open}\n` +
-					`High: ${latestOhlc.high}\n` +
-					`Low: ${latestOhlc.low}\n` +
-					`Close: ${latestOhlc.close}\n` +
-					`Volume: ${latestOhlc.volume}\n` +
-					`Timestamp: ${latestOhlc.timestamp.toLocaleString()}`;
-				ctx.reply(message, { reply_to_message_id: ctx.message.message_id });
-			} else {
-				ctx.reply("No price data available.", { reply_to_message_id: ctx.message.message_id });
-			}
-		} catch (error) {
-			console.error("Error fetching price data:", error);
-			ctx.reply("An error occurred while fetching price data.", { reply_to_message_id: ctx.message.message_id });
-		}
-	});
-};
-
-/**
  * command: /chart
  * =====================
  * Display price chart for a token pair
  *
  */
 export const chart = async (): Promise<void> => {
-	bot.command("chart", async (ctx) => {
+	bot.command("chart", async (ctx: any) => {
+		if (!ctx.message) {
+			return;
+		}
 		const now = Math.floor(Date.now() / 1000);
 		if (now - ctx.message.date > 120) {
 			return; // Ignore old commands
 		}
 		const userId = BigInt(ctx.from.id);
-		const args = ctx.message.text.split(" ");
+		const args = ctx.message.text?.split(" ") || [];
 		let targetTokenAddress: string | undefined;
 		let targetTimeframe: string | undefined;
 
@@ -221,18 +176,32 @@ export const chart = async (): Promise<void> => {
 
 		const userPref = await getUserPreference(userId);
 		const tokenAddress = targetTokenAddress || userPref?.defaultTokenAddress;
-		const timeframe = targetTimeframe || userPref?.defaultTimeframe || "1m";
+		const timeframe = targetTimeframe || userPref?.defaultTimeframe || "5m";
 
 		if (!tokenAddress) {
-			ctx.reply(
+			ctx.telegram.sendMessage(
+				ctx.message.chat.id,
 				"Please specify a token address (e.g., /chart <token_address>) or set a default with /settoken.",
-				{ reply_to_message_id: ctx.message.message_id },
 			);
 			return;
 		}
 
 		await sendChart(ctx, tokenAddress, timeframe);
 	});
+};
+
+const createTokenChartCommand = (tokenAddress: string) => {
+	return async (ctx: any) => {
+		if (!ctx.message) {
+			return;
+		}
+		const now = Math.floor(Date.now() / 1000);
+		if (now - ctx.message.date > 120) {
+			return; // Ignore old commands
+		}
+		const timeframe = "5m"; // Default to 5m
+		await sendChart(ctx, tokenAddress, timeframe);
+	};
 };
 
 /**
@@ -242,15 +211,7 @@ export const chart = async (): Promise<void> => {
  *
  */
 export const spike = async (): Promise<void> => {
-	bot.command("spike", async (ctx) => {
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
-		const tokenAddress = SPIKE_TOKEN_ADDRESS;
-		const timeframe = "1m"; // Default to 1m for /spike
-		await sendChart(ctx, tokenAddress, timeframe);
-	});
+	bot.command("spike", createTokenChartCommand(SPIKE_TOKEN_ADDRESS));
 };
 
 /**
@@ -260,15 +221,7 @@ export const spike = async (): Promise<void> => {
  *
  */
 export const josh = async (): Promise<void> => {
-	bot.command("josh", async (ctx) => {
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
-		const tokenAddress = JOSH_TOKEN_ADDRESS;
-		const timeframe = "1m"; // Default to 1m for /josh
-		await sendChart(ctx, tokenAddress, timeframe);
-	});
+	bot.command("josh", createTokenChartCommand(JOSH_TOKEN_ADDRESS));
 };
 
 /**
@@ -278,13 +231,5 @@ export const josh = async (): Promise<void> => {
  *
  */
 export const babyjosh = async (): Promise<void> => {
-	bot.command("babyjosh", async (ctx) => {
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
-		const tokenAddress = BABYJOSH_TOKEN_ADDRESS;
-		const timeframe = "1m"; // Default to 1m for /babyjosh
-		await sendChart(ctx, tokenAddress, timeframe);
-	});
+	bot.command("babyjosh", createTokenChartCommand(BABYJOSH_TOKEN_ADDRESS));
 };
