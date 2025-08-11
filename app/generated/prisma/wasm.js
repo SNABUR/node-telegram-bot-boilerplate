@@ -5,28 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
-  PrismaClientKnownRequestError,
-  PrismaClientUnknownRequestError,
-  PrismaClientRustPanicError,
-  PrismaClientInitializationError,
-  PrismaClientValidationError,
-  getPrismaClient,
-  sqltag,
-  empty,
-  join,
-  raw,
-  skip,
   Decimal,
-  Debug,
   objectEnumValues,
   makeStrictEnum,
-  Extensions,
-  warnOnce,
-  defineDmmfProperty,
   Public,
   getRuntime,
-  createParam,
-} = require('./runtime/wasm-engine-edge.js')
+  skip
+} = require('./runtime/index-browser.js')
 
 
 const Prisma = {}
@@ -43,27 +28,71 @@ Prisma.prismaVersion = {
   engine: "361e86d0ea4987e9f53a565309b3eed797a6bcbd"
 }
 
-Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
-Prisma.PrismaClientUnknownRequestError = PrismaClientUnknownRequestError
-Prisma.PrismaClientRustPanicError = PrismaClientRustPanicError
-Prisma.PrismaClientInitializationError = PrismaClientInitializationError
-Prisma.PrismaClientValidationError = PrismaClientValidationError
+Prisma.PrismaClientKnownRequestError = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`PrismaClientKnownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)};
+Prisma.PrismaClientUnknownRequestError = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`PrismaClientUnknownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.PrismaClientRustPanicError = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`PrismaClientRustPanicError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.PrismaClientInitializationError = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`PrismaClientInitializationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.PrismaClientValidationError = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`PrismaClientValidationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
 Prisma.Decimal = Decimal
 
 /**
  * Re-export of sql-template-tag
  */
-Prisma.sql = sqltag
-Prisma.empty = empty
-Prisma.join = join
-Prisma.raw = raw
+Prisma.sql = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`sqltag is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.empty = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`empty is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.join = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`join is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.raw = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`raw is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
 Prisma.validator = Public.validator
 
 /**
 * Extensions
 */
-Prisma.getExtensionContext = Extensions.getExtensionContext
-Prisma.defineExtension = Extensions.defineExtension
+Prisma.getExtensionContext = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`Extensions.getExtensionContext is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
+Prisma.defineExtension = () => {
+  const runtimeName = getRuntime().prettyName;
+  throw new Error(`Extensions.defineExtension is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
+In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
+)}
 
 /**
  * Shorthand utilities for JSON filtering
@@ -80,11 +109,10 @@ Prisma.NullTypes = {
 
 
 
-
-
 /**
  * Enums
  */
+
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -151,7 +179,8 @@ exports.Prisma.OhlcDataScalarFieldEnum = {
   tradeCount: 'tradeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  pairId: 'pairId'
+  token0Address: 'token0Address',
+  token1Address: 'token1Address'
 };
 
 exports.Prisma.UserPreferenceScalarFieldEnum = {
@@ -185,85 +214,34 @@ exports.Prisma.ModelName = {
   OhlcData: 'OhlcData',
   UserPreference: 'UserPreference'
 };
+
 /**
- * Create the Client
+ * This is a stub Prisma Client that will error at runtime if called.
  */
-const config = {
-  "generator": {
-    "name": "client",
-    "provider": {
-      "fromEnvVar": null,
-      "value": "prisma-client-js"
-    },
-    "output": {
-      "value": "D:\\telegram_bot\\app\\generated\\prisma",
-      "fromEnvVar": null
-    },
-    "config": {
-      "engineType": "library"
-    },
-    "binaryTargets": [
-      {
-        "fromEnvVar": null,
-        "value": "windows",
-        "native": true
-      }
-    ],
-    "previewFeatures": [
-      "driverAdapters"
-    ],
-    "sourceFilePath": "D:\\telegram_bot\\prisma\\schema.prisma",
-    "isCustomOutput": true
-  },
-  "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
-  },
-  "relativePath": "../../../prisma",
-  "clientVersion": "6.13.0",
-  "engineVersion": "361e86d0ea4987e9f53a565309b3eed797a6bcbd",
-  "datasourceNames": [
-    "db"
-  ],
-  "activeProvider": "postgresql",
-  "postinstall": false,
-  "inlineDatasources": {
-    "db": {
-      "url": {
-        "fromEnvVar": "DATABASE_URL",
-        "value": null
-      }
-    }
-  },
-  "inlineSchema": "generator client {\n  provider        = \"prisma-client-js\"\n  output          = \"../app/generated/prisma\"\n  engineType      = \"library\"\n  previewFeatures = [\"driverAdapters\"]\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel BlockProgress {\n  id              Int      @id @default(autoincrement())\n  network         String   @unique\n  lastBlockHeight BigInt\n  updatedAt       DateTime @updatedAt\n}\n\nmodel EventTracking {\n  id              Int      @id @default(autoincrement())\n  eventType       String\n  blockHeight     BigInt\n  transactionHash String\n  processed       Boolean  @default(false)\n  error           String?\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @default(now())\n  network         String\n  sequenceNumber  String?\n\n  @@unique([network, transactionHash, sequenceNumber, eventType])\n  @@index([network, blockHeight])\n  @@index([network, eventType])\n  @@index([network])\n  @@index([network, processed])\n}\n\nmodel Token {\n  id      Int    @id @default(autoincrement())\n  network String\n\n  address        String\n  wrappedAddress String? @unique\n\n  symbol            String\n  name              String\n  decimals          Int\n  maxSupply         BigInt?\n  circulatingSupply BigInt?\n\n  pairsAsToken0 Pair[] @relation(\"token0\")\n  pairsAsToken1 Pair[] @relation(\"token1\")\n\n  createdAt DateTime @default(now())\n\n  @@unique([network, address])\n}\n\nmodel Pair {\n  id Int @id @default(autoincrement())\n\n  network String\n\n  token0Id Int\n  token1Id Int\n\n  spikeyAmmPairAddress String?\n\n  spikeyAmmReserve0 BigInt?\n  spikeyAmmReserve1 BigInt?\n  lastStatsUpdate   DateTime?\n\n  token0 Token @relation(\"token0\", fields: [token0Id], references: [id])\n  token1 Token @relation(\"token1\", fields: [token1Id], references: [id])\n\n  ohlcData OhlcData[]\n\n  createdAt DateTime @default(now())\n\n  @@unique([network, token0Id, token1Id])\n  @@unique([network, spikeyAmmPairAddress])\n  @@index([token0Id])\n  @@index([token1Id])\n}\n\nmodel OhlcData {\n  id Int @id @default(autoincrement())\n\n  network   String\n  ammSource String\n  timeframe String\n  timestamp DateTime\n\n  open       Decimal\n  high       Decimal\n  low        Decimal\n  close      Decimal\n  volume     Decimal\n  tradeCount Int\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  pairId Int\n  pair   Pair @relation(fields: [pairId], references: [id])\n\n  @@unique([network, ammSource, pairId, timeframe, timestamp])\n  @@index([pairId])\n  @@index([timestamp])\n}\n\nmodel UserPreference {\n  id                  Int     @id @default(autoincrement())\n  userId              BigInt  @unique // Telegram user ID\n  defaultTokenAddress String? // The address of the non-SupraCoin token\n  defaultTimeframe    String? // e.g., \"1m\", \"5m\", \"1h\"\n}\n",
-  "inlineSchemaHash": "edb455903c68acc54b7f65ca5ab176a37c773638eeac2b5ddaae17ad4a9d8d67",
-  "copyEngine": true
-}
-config.dirname = '/'
+class PrismaClient {
+  constructor() {
+    return new Proxy(this, {
+      get(target, prop) {
+        let message
+        const runtime = getRuntime()
+        if (runtime.isEdge) {
+          message = `PrismaClient is not configured to run in ${runtime.prettyName}. In order to run Prisma Client on edge runtime, either:
+- Use Prisma Accelerate: https://pris.ly/d/accelerate
+- Use Driver Adapters: https://pris.ly/d/driver-adapters
+`;
+        } else {
+          message = 'PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `' + runtime.prettyName + '`).'
+        }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"BlockProgress\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"network\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastBlockHeight\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"EventTracking\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"eventType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"blockHeight\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"transactionHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"processed\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"error\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"network\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sequenceNumber\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"Token\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"network\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"address\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"wrappedAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"symbol\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"decimals\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"maxSupply\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"circulatingSupply\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"pairsAsToken0\",\"kind\":\"object\",\"type\":\"Pair\",\"relationName\":\"token0\"},{\"name\":\"pairsAsToken1\",\"kind\":\"object\",\"type\":\"Pair\",\"relationName\":\"token1\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Pair\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"network\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token0Id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token1Id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"spikeyAmmPairAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"spikeyAmmReserve0\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"spikeyAmmReserve1\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"lastStatsUpdate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"token0\",\"kind\":\"object\",\"type\":\"Token\",\"relationName\":\"token0\"},{\"name\":\"token1\",\"kind\":\"object\",\"type\":\"Token\",\"relationName\":\"token1\"},{\"name\":\"ohlcData\",\"kind\":\"object\",\"type\":\"OhlcData\",\"relationName\":\"OhlcDataToPair\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"OhlcData\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"network\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ammSource\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timeframe\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"open\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"high\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"low\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"close\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"volume\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"tradeCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"pairId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"pair\",\"kind\":\"object\",\"type\":\"Pair\",\"relationName\":\"OhlcDataToPair\"}],\"dbName\":null},\"UserPreference\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"defaultTokenAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"defaultTimeframe\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
-defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
-config.engineWasm = {
-  getRuntime: async () => require('./query_engine_bg.js'),
-  getQueryEngineWasmModule: async () => {
-    const loader = (await import('#wasm-engine-loader')).default
-    const engine = (await loader).default
-    return engine
+        message += `
+If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report`
+
+        throw new Error(message)
+      }
+    })
   }
 }
-config.compilerWasm = undefined
 
-config.injectableEdgeEnv = () => ({
-  parsed: {
-    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
-  }
-})
-
-if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {
-  Debug.enable(typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined)
-}
-
-const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
-Object.assign(exports, Prisma)
 
+Object.assign(exports, Prisma)

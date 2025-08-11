@@ -40,25 +40,14 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			return;
 		}
 
-		// Find the pair (SupraCoin always token0 for consistency)
-		const pair = await prisma.pair.findFirst({
-			where: {
-				OR: [
-					{ token0Id: supraCoin.id, token1Id: targetToken.id },
-					{ token0Id: targetToken.id, token1Id: supraCoin.id },
-				],
-			},
-		});
-
-		if (!pair) {
-			ctx.reply(`Pair for ${targetToken.symbol}/${supraCoin.symbol} not found.`);
-			return;
-		}
+		const [sortedAddress0, sortedAddress1] = [supraCoin.address, targetToken.address].sort();
 
 		// Fetch OHLC data
 		const ohlcData = await prisma.ohlcData.findMany({
 			where: {
-				pairId: pair.id,
+				// Ya no usamos 'pairId', usamos las claves naturales
+				token0Address: sortedAddress0,
+				token1Address: sortedAddress1,
 				timeframe: timeframe,
 			},
 			orderBy: {
@@ -72,7 +61,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 
 		if (ohlcData.length === 0) {
 			ctx.reply(
-				`No OHLC data available for ${targetToken.symbol}/${supraCoin.symbol} in ${timeframe} timeframe.`,
+				`No OHLC data available for ${targetToken.symbol}/${supraCoin.symbol} in the ${timeframe} timeframe.`,
 			);
 			return;
 		}
@@ -96,10 +85,10 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 		// Build caption with structured format and emojis
 		let caption = `📊 *${escapeMarkdownV2(targetToken.symbol)} Price Information*\n\n`;
 		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \\= ${escapeMarkdownV2(
-			currentPrice !== 0 ? currentPrice.toFixed(targetToken.decimals > 8 ? 8 : 16) : "N/A",
+			currentPrice !== 0 ? (1 / currentPrice).toFixed(targetToken.decimals > 8 ? 8 : 3) : "N/A",
 		)} ${escapeMarkdownV2(targetToken.symbol)}\n`;
 		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \\= ${escapeMarkdownV2(
-			(1 / currentPrice).toFixed(8),
+			currentPrice.toFixed(8),
 		)} ${escapeMarkdownV2(supraCoin.symbol)}\n`;
 		caption += `💹 *Market Cap:* \\$${escapeMarkdownV2(
 			marketCap !== null

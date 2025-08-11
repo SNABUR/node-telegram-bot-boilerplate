@@ -1,8 +1,6 @@
 generator client {
     provider = "prisma-client-js"
     output   = "../app/generated/prisma"
-    engineType = "library"
-    previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -44,10 +42,10 @@ model Token {
     address        String
     wrappedAddress String? @unique
 
-    symbol   String
-    name     String
-    decimals Int
-    maxSupply  BigInt?
+    symbol            String
+    name              String
+    decimals          Int
+    maxSupply         BigInt?
     circulatingSupply BigInt?
 
     pairsAsToken0 Pair[] @relation("token0")
@@ -75,8 +73,6 @@ model Pair {
     token0 Token @relation("token0", fields: [token0Id], references: [id])
     token1 Token @relation("token1", fields: [token1Id], references: [id])
 
-    ohlcData OhlcData[]
-
     createdAt DateTime @default(now())
 
     @@unique([network, token0Id, token1Id])
@@ -103,12 +99,14 @@ model OhlcData {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    pairId Int
-    pair   Pair @relation(fields: [pairId], references: [id])
+    token0Address String
+    token1Address String
 
-    @@unique([network, ammSource, pairId, timeframe, timestamp])
-    @@index([pairId])
+    @@unique([network, ammSource, token0Address, token1Address, timeframe, timestamp])
+    @@index([token0Address])
+    @@index([token1Address])
     @@index([timestamp])
+    @@index([network, token0Address, token1Address, timeframe, timestamp(sort: Desc)])
 }
 
 model UserPreference {

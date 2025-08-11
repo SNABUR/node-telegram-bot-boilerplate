@@ -179,7 +179,8 @@ exports.Prisma.OhlcDataScalarFieldEnum = {
   tradeCount: 'tradeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  pairId: 'pairId'
+  token0Address: 'token0Address',
+  token1Address: 'token1Address'
 };
 
 exports.Prisma.UserPreferenceScalarFieldEnum = {
