@@ -1,16 +1,16 @@
-SPIKE Price Information:
-
-• 1 $SUPRA = 1322013847.600000 $SPIKE
-• 1 $SPIKE = 0.00000000 $SUPRA
-• 1 $SPIKE = $0.00000000 USD
-
-Market Cap: $42,312.04
-Supply: 13,700,000,000,000,000
-
-Price Changes:
-• 5min: 0.00%
-• 1h: 0.00%
-• 12h: -16.62% 📉
-• 24h: -23.29% 📉
-
-Last Updated: 2025-07-29 07:09:25
+Bot stopped.
+[MCAP] Calculating for token: 0xfec116479f1fd3cb9732cc768e6061b0e45b178a610b9bc23c2143a6493e794::memecoins::SPIKE
+[MCAP] Found target token. Circulating supply: 137000000000000
+[MCAP] Found latest OHLC data. Close price: 7.245746221651289e-8
+[MCAP] Inverting price because token0 is SupraCoin.
+Error calculating market cap: TypeError: prisma_js_1.default.Decimal is not a constructor
+    at calculateMarketCap (D:\telegram_bot\dist\functions\common.js:90:33)
+    at async sendChart (D:\telegram_bot\dist\functions\commands\chart.js:68:42)
+    at async D:\telegram_bot\dist\functions\commands\chart.js:204:9
+    at async execute (D:\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)

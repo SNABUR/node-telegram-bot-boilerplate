@@ -19,7 +19,13 @@ const escapeMarkdownV2 = (text: string): string => {
 };
 
 export const sendChart = async (ctx: any, tokenAddress: string, timeframe: string, isUpdate = false) => {
+	let loadingMessageId: number | undefined;
+
 	try {
+		if (!isUpdate) {
+			const loadingMessage = await ctx.reply("⏳ Loading chart, please wait...");
+			loadingMessageId = loadingMessage.message_id;
+		}
 		// Find SupraCoin token
 		const supraCoin = await prisma.token.findFirst({
 			where: { address: SUPRA_COIN_ADDRESS },
@@ -169,6 +175,10 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 				reply_to_message_id: ctx.message?.message_id,
 				message_thread_id: ctx.message?.message_thread_id,
 			});
+		}
+	} finally {
+		if (loadingMessageId) {
+			await ctx.deleteMessage(loadingMessageId);
 		}
 	}
 };

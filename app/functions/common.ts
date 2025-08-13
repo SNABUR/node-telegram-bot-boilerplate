@@ -1,6 +1,6 @@
 import config from "../configs/config.js";
 import prisma from "../lib/prisma.js";
-import { UserPreference } from "@app/generated/prisma/index.js";
+import { Prisma, UserPreference } from "@app/generated/prisma/index.js";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
 export const SPIKE_TOKEN_ADDRESS = config.tokens.SPIKE_TOKEN_ADDRESS;
@@ -42,67 +42,65 @@ export const calculateMarketCap = async (
 		const targetToken = await prisma.token.findFirst({
 			where: { address: tokenAddress },
 			select: {
-				id: true,
 				circulatingSupply: true,
 				maxSupply: true,
 			},
 		});
 
 		if (!targetToken || targetToken.circulatingSupply === null) {
-			return { marketCap: null, maxSupply: null }; // No se puede calcular el MCAP sin maxSupply
-		}
-
-		// Encontrar el par del token con SupraCoin
-		const supraCoin = await prisma.token.findFirst({
-			where: { address: config.tokens.SUPRA_COIN_ADDRESS },
-			select: { id: true },
-		});
-
-		if (!supraCoin) {
-			console.error("SupraCoin not found in database for MCAP calculation.");
 			return { marketCap: null, maxSupply: null };
 		}
 
-		const pair = await prisma.pair.findFirst({
-			where: {
-				OR: [
-					{ token0Id: supraCoin.id, token1Id: targetToken.id },
-					{ token0Id: targetToken.id, token1Id: supraCoin.id },
-				],
-			},
-			select: { id: true },
-		});
+		const supraCoinAddress = config.tokens.SUPRA_COIN_ADDRESS;
 
-		if (!pair) {
-			return { marketCap: null, maxSupply: null }; // No se encontró el par para el cálculo del precio
-		}
-
-		// Obtener el último precio de cierre del token contra Supra
+		// Get the latest closing price of the token against Supra
 		const latestOhlc = await prisma.ohlcData.findFirst({
 			where: {
-				pairId: pair.id,
-				timeframe: "1m", // Usamos 1m para el precio más reciente
+				OR: [
+					{
+						token0Address: tokenAddress,
+						token1Address: supraCoinAddress,
+					},
+					{
+						token0Address: supraCoinAddress,
+						token1Address: tokenAddress,
+					},
+				],
+				timeframe: "5m", // User changed this to 5m
 			},
 			orderBy: {
 				timestamp: "desc",
 			},
 			select: {
 				close: true,
+				token0Address: true, // Include to know the price orientation
 			},
 		});
 
 		if (!latestOhlc) {
-			return { marketCap: null, maxSupply: null }; // No hay datos de precio OHLC
+			return { marketCap: null, maxSupply: null };
 		}
 
-		const tokenPriceInSupra = parseFloat(latestOhlc.close.toString());
-		const supraPriceInUsd = config.prices.SUPRA_USD_PRICE;
-		const circulatingSupply = parseFloat(targetToken.circulatingSupply.toString());
+		let tokenPriceInSupra = latestOhlc.close; // This is already a Prisma.Decimal object
 
-		const marketCap = tokenPriceInSupra * supraPriceInUsd * circulatingSupply;
-		const maxSupply = targetToken.maxSupply ? parseFloat(targetToken.maxSupply.toString()) : null;
+		// If token1 is Supra, the price is inverted, so we need to calculate the reciprocal
+		if (latestOhlc.token1Address === supraCoinAddress) {
+			if (tokenPriceInSupra.isZero()) {
+				return { marketCap: null, maxSupply: null }; // Avoid division by zero
+			}
+			tokenPriceInSupra = new Prisma.Decimal(1).div(tokenPriceInSupra); // 2. Usar Prisma (mayúscula)
+		}
 
-		return { marketCap, maxSupply };
+		const supraPriceInUsd = new Prisma.Decimal(config.prices.SUPRA_USD_PRICE);
+		const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString());
+
+		const marketCap = tokenPriceInSupra.mul(supraPriceInUsd).mul(circulatingSupply); // No se necesita cambio aquí
+		const maxSupply = targetToken.maxSupply ? new Prisma.Decimal(targetToken.maxSupply.toString()) : null;
+
+		return {
+			marketCap: marketCap.toNumber(), // Convert back to number for return type, but be aware of precision for display
+			maxSupply: maxSupply ? maxSupply.toNumber() : null,
+		};
 	} catch (error) {
 		console.error("Error calculating market cap:", error);
 		return { marketCap: null, maxSupply: null };
