@@ -15,6 +15,9 @@ export const startSpikeMonitor = () => {
         const now = new Date();
         const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
 
+        console.log(`Querying for TOKEN_ADDRESS: ${TOKEN_ADDRESS}`);
+        console.log(`Time range: ${oneMinuteAgo.toISOString()} to ${now.toISOString()}`);
+
         try {
             const spikeToken = await prisma.token.findFirst({
                 where: {
@@ -45,7 +48,9 @@ export const startSpikeMonitor = () => {
                 take: 1,
             });
 
+            console.log(`Found ${ohlcData.length} OHLC data entries.`);
             if (ohlcData.length > 0) {
+                console.log("OHLC Data found:", ohlcData[0]);
                 const data = ohlcData[0];
                 const message = `
 🚀 **SPIKE Token Activity Detected!** 🚀
