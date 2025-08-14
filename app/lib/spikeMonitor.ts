@@ -16,7 +16,7 @@ export const startSpikeMonitor = () => {
         const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
 
         console.log(`Querying for TOKEN_ADDRESS: ${TOKEN_ADDRESS}`);
-        console.log(`Time range: ${oneMinuteAgo.toISOString()} to ${now.toISOString()}`);
+        console.log(`Time range (ms): ${oneMinuteAgo.getTime()} to ${now.getTime()}`);
 
         try {
             const spikeToken = await prisma.token.findFirst({
@@ -56,7 +56,7 @@ export const startSpikeMonitor = () => {
 🚀 **SPIKE Token Activity Detected!** 🚀
 
 Timeframe: ${data.timeframe}
-Timestamp: ${data.timestamp.toLocaleString()}
+Timestamp: ${data.timestamp.getTime()} (ms)
 Open: ${data.open.toFixed(8)}
 High: ${data.high.toFixed(8)}
 Low: ${data.low.toFixed(8)}
