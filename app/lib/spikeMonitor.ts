@@ -8,6 +8,8 @@ const prisma = new PrismaClient();
 const TOKEN_0_ADDRESS = "0X1::supra_coin::SupraCoin";
 const TOKEN_ADDRESS = "0xfec116479f1fd3cb9732cc768e6061b0e45b178a610b9bc23c2143a6493e794::memecoins::SPIKE";
 const TELEGRAM_GROUP_ID = "-1002468844607"; // Replace with your actual group ID
+const THREAD_ID = "11541"; // Replace with your actual thread ID
+
 
 export const startSpikeMonitor = () => {
     cron.schedule("*/30 * * * * *", async () => {
@@ -66,7 +68,10 @@ Trade Count: ${data.tradeCount}
 
 Check the charts for more details!
                 `;
-                await bot.telegram.sendMessage(TELEGRAM_GROUP_ID, message, { parse_mode: "Markdown" });
+                await bot.telegram.sendMessage(TELEGRAM_GROUP_ID, message, {
+                    parse_mode: "Markdown",
+                    message_thread_id: THREAD_ID,
+                });
                 console.log("SPIKE activity message sent!");
             } else {
                 console.log("No SPIKE token activity in the last minute.");
