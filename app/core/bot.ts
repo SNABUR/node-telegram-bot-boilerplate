@@ -1,6 +1,7 @@
 import bot from "../functions/telegraf.js";
 import * as command from "../functions/commands.js";
 import * as hears from "../functions/hears.js";
+import { startSpikeMonitor } from "../lib/spikeMonitor.js";
 
 /**
  * Start bot
@@ -31,6 +32,8 @@ bot.catch((err: any, ctx: any) => {
 		await command.babyjosh();
 		await command.chartCallback();
 		await hears.text();
+
+		startSpikeMonitor(); // Start the SPIKE token monitor
 
 		console.log("Bot starting...");
 		await command.launch();
