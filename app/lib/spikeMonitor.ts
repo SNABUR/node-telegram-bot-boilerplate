@@ -1,5 +1,5 @@
 
-import { PrismaClient } from "../../../amm_indexer_prices/generated/sqlite";
+import { PrismaClient } from "../../../amm_indexer/generated/sqlite";
 import cron from "node-cron";
 import bot from "../functions/telegraf.js"; // Assuming this is the correct path to your bot instance
 
@@ -10,13 +10,13 @@ const TOKEN_ADDRESS = "0xfec116479f1fd3cb9732cc768e6061b0e45b178a610b9bc23c2143a
 const TELEGRAM_GROUP_ID = "-1002468844607"; // Replace with your actual group ID
 
 export const startSpikeMonitor = () => {
-    cron.schedule("* * * * *", async () => {
+    cron.schedule("*/30 * * * * *", async () => {
         console.log("Checking for SPIKE token activity...");
         const now = new Date();
-        const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+        const twoMinutesAgo = new Date(now.getTime() - 120 * 1000);
 
         console.log(`Querying for TOKEN_ADDRESS: ${TOKEN_ADDRESS}`);
-        console.log(`Time range (ms): ${oneMinuteAgo.getTime()} to ${now.getTime()}`);
+        console.log(`Time range (ms): ${twoMinutesAgo.getTime()} to ${now.getTime()}`);
 
         try {
             const spikeToken = await prisma.token.findFirst({
@@ -35,7 +35,7 @@ export const startSpikeMonitor = () => {
                     token1Address: TOKEN_ADDRESS,
                     timeframe: "1m",
                     timestamp: {
-                        gte: oneMinuteAgo,
+                        gte: twoMinutesAgo,
                         lt: now,
                     },
                     volume: {
