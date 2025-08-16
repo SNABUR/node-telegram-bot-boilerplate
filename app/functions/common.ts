@@ -1,11 +1,62 @@
 import config from "../configs/config.js";
 import prisma from "../lib/prisma.js";
-import { Prisma } from "../../dist/generated/supabase";
+import cache from "../lib/cache.js";
+import { Prisma, Token, GroupConfiguration } from "../../dist/generated/supabase";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
 export const SPIKE_TOKEN_ADDRESS = config.tokens.SPIKE_TOKEN_ADDRESS;
 export const JOSH_TOKEN_ADDRESS = config.tokens.JOSH_TOKEN_ADDRESS;
 export const BABYJOSH_TOKEN_ADDRESS = config.tokens.BABYJOSH_TOKEN_ADDRESS;
+
+/**
+ * Retrieves token data from cache if available, otherwise fetches from the database.
+ * @param {string} tokenAddress The address of the token to retrieve.
+ * @returns {Promise<Token | null>} The token data or null if not found.
+ */
+export const getCachedTokenByAddress = async (tokenAddress: string): Promise<Token | null> => {
+    const cacheKey = `token-${tokenAddress}`;
+    const cachedToken = cache.get<Token>(cacheKey);
+
+    if (cachedToken) {
+        return cachedToken;
+    }
+
+    const tokenFromDb = await prisma.token.findFirst({
+        where: { address: tokenAddress },
+    });
+
+    if (tokenFromDb) {
+        cache.set(cacheKey, tokenFromDb);
+    }
+
+    return tokenFromDb;
+};
+
+/**
+ * Retrieves group configuration data from cache or database.
+ * @param {number | string} chatId The ID of the chat group.
+ * @returns {Promise<(GroupConfiguration & { spikeMonitorToken: Token | null }) | null>} The group configuration or null.
+ */
+export const getCachedGroupConfiguration = async (chatId: number | string): Promise<(GroupConfiguration & { spikeMonitorToken: Token | null }) | null> => {
+    const cacheKey = `group-config-${chatId}`;
+    const cachedConfig = cache.get<(GroupConfiguration & { spikeMonitorToken: Token | null })>(cacheKey);
+
+    if (cachedConfig) {
+        return cachedConfig;
+    }
+
+    const configFromDb = await prisma.groupConfiguration.findUnique({
+        where: { chatId: BigInt(chatId) },
+        include: { spikeMonitorToken: true },
+    });
+
+    if (configFromDb) {
+        cache.set(cacheKey, configFromDb);
+    }
+
+    return configFromDb;
+};
+
 
 // Helper function to check if a user is an admin
 export const isAdmin = async (ctx: any): Promise<boolean> => {
@@ -20,13 +71,8 @@ export const calculateMarketCap = async (
 	tokenAddress: string,
 ): Promise<{ marketCap: number | null; maxSupply: number | null }> => {
 	try {
-		const targetToken = await prisma.token.findFirst({
-			where: { address: tokenAddress },
-			select: {
-				circulatingSupply: true,
-				maxSupply: true,
-			},
-		});
+        // Use the cached function to get token data
+		const targetToken = await getCachedTokenByAddress(tokenAddress);
 
 		if (!targetToken || targetToken.circulatingSupply === null) {
 			return { marketCap: null, maxSupply: null };
@@ -47,15 +93,15 @@ export const calculateMarketCap = async (
 						token1Address: tokenAddress,
 					},
 				],
-				timeframe: "5m", // User changed this to 5m
+				timeframe: "5m",
 			},
 			orderBy: {
 				timestamp: "desc",
 			},
 			select: {
 				close: true,
-				token0Address: true, // Include to know the price orientation
-				token1Address: true, // Include to know the price orientation
+				token0Address: true,
+				token1Address: true,
 			},
 		});
 
@@ -63,24 +109,23 @@ export const calculateMarketCap = async (
 			return { marketCap: null, maxSupply: null };
 		}
 
-		let tokenPriceInSupra = latestOhlc.close; // This is already a Prisma.Decimal object
+		let tokenPriceInSupra = latestOhlc.close;
 
-		// If token1 is Supra, the price is inverted, so we need to calculate the reciprocal
 		if (latestOhlc.token1Address === supraCoinAddress) {
 			if (tokenPriceInSupra.isZero()) {
-				return { marketCap: null, maxSupply: null }; // Avoid division by zero
+				return { marketCap: null, maxSupply: null };
 			}
-			tokenPriceInSupra = new Prisma.Decimal(1).div(tokenPriceInSupra); // 2. Usar Prisma (mayúscula)
+			tokenPriceInSupra = new Prisma.Decimal(1).div(tokenPriceInSupra);
 		}
 
 		const supraPriceInUsd = new Prisma.Decimal(config.prices.SUPRA_USD_PRICE);
 		const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString());
 
-		const marketCap = tokenPriceInSupra.mul(supraPriceInUsd).mul(circulatingSupply); // No se necesita cambio aquí
+		const marketCap = tokenPriceInSupra.mul(supraPriceInUsd).mul(circulatingSupply);
 		const maxSupply = targetToken.maxSupply ? new Prisma.Decimal(targetToken.maxSupply.toString()) : null;
 
 		return {
-			marketCap: marketCap.toNumber(), // Convert back to number for return type, but be aware of precision for display
+			marketCap: marketCap.toNumber(),
 			maxSupply: maxSupply ? maxSupply.toNumber() : null,
 		};
 	} catch (error) {

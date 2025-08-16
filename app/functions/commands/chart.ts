@@ -9,11 +9,12 @@ import {
 	JOSH_TOKEN_ADDRESS,
 	BABYJOSH_TOKEN_ADDRESS,
 	calculateMarketCap,
+    getCachedTokenByAddress, // Import the new cached function
 } from "../common.js";
 
 // Helper function to escape special characters for MarkdownV2
 const escapeMarkdownV2 = (text: string): string => {
-	const specialChars = /[_*[\]()~`#+\-=|{}.!]/g;
+	const specialChars = /[_*[\\\]()~`#+\-=|{}.!]/g;
 	return text.replace(specialChars, "\\$&");
 };
 
@@ -25,20 +26,15 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			const loadingMessage = await ctx.reply("⏳ Loading chart, please wait...");
 			loadingMessageId = loadingMessage.message_id;
 		}
-		// Find SupraCoin token
-		const supraCoin = await prisma.token.findFirst({
-			where: { address: SUPRA_COIN_ADDRESS },
-		});
+
+		// Find SupraCoin and target token using the cache
+		const supraCoin = await getCachedTokenByAddress(SUPRA_COIN_ADDRESS);
+		const targetToken = await getCachedTokenByAddress(tokenAddress);
 
 		if (!supraCoin) {
 			ctx.reply("SupraCoin not found in database. Please check configuration.");
 			return;
 		}
-
-		// Find the target token
-		const targetToken = await prisma.token.findFirst({
-			where: { address: tokenAddress },
-		});
 
 		if (!targetToken) {
 			ctx.reply("Target token not found. Please provide a valid token address.");
@@ -50,7 +46,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 		// Fetch OHLC data
 		const ohlcData = await prisma.ohlcData.findMany({
 			where: {
-				// Ya no usamos 'pairId', usamos las claves naturales
 				token0Address: sortedAddress0,
 				token1Address: sortedAddress1,
 				timeframe: timeframe,
@@ -61,7 +56,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			take: 100,
 		});
 
-		// Reverse the data to have it in chronological order for the chart
 		ohlcData.reverse();
 
 		if (ohlcData.length === 0) {
@@ -71,7 +65,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			return;
 		}
 
-		// Calculate additional metrics
 		const latestOhlc = ohlcData[ohlcData.length - 1];
 		const firstOhlc = ohlcData[0];
 
@@ -80,22 +73,18 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			((latestOhlc.close.toNumber() - firstOhlc.open.toNumber()) / firstOhlc.open.toNumber()) * 100;
 		const lastUpdate = latestOhlc.timestamp;
 
-		// Generate chart
 		const chartBuffer = await generateOhlcChart(ohlcData);
 
-		// Calculate Market Cap
 		const { marketCap, maxSupply } = await calculateMarketCap(tokenAddress);
 
-		// Build caption with structured format and emojis
-		// Build caption with structured format and emojis
 		let caption = `📊 *${escapeMarkdownV2(targetToken.symbol)} Price Information*\n\n`;
-		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \\= ${escapeMarkdownV2(
+		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \= ${escapeMarkdownV2(
 			currentPrice !== 0 ? (1 / currentPrice).toFixed(targetToken.decimals > 8 ? 8 : 3) : "N/A",
 		)} ${escapeMarkdownV2(targetToken.symbol)}\n`;
-		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \\= ${escapeMarkdownV2(
+		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \= ${escapeMarkdownV2(
 			currentPrice.toFixed(8),
 		)} ${escapeMarkdownV2(supraCoin.symbol)}\n`;
-		caption += `💹 *Market Cap:* \\$${escapeMarkdownV2(
+		caption += `💹 *Market Cap:* \$${escapeMarkdownV2(
 			marketCap !== null
 				? marketCap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 				: "0",
@@ -123,7 +112,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 
 		try {
 			if (isUpdate) {
-				// If it's an update, edit the existing message
 				await ctx.editMessageMedia(
 					{
 						type: "photo",
@@ -133,10 +121,9 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 					},
 					{
 						reply_markup: reply_markup,
-					},
+					}
 				);
 			} else {
-				// Otherwise, send a new message
 				await ctx.replyWithPhoto(
 					{ source: chartBuffer },
 					{
@@ -145,7 +132,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 						reply_markup: reply_markup,
 						reply_to_message_id: ctx.message?.message_id,
 						message_thread_id: ctx.message?.message_thread_id,
-					},
+					}
 				);
 			}
 		} catch (error: any) {
@@ -182,13 +169,6 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 	}
 };
 
-/**
- * command: /chart
- * =====================
- * Display price chart for a token pair
- */
-
-
 const createTokenChartCommand = (tokenAddress: string) => {
 	return async (ctx: any) => {
 		if (!ctx.message) {
@@ -203,29 +183,14 @@ const createTokenChartCommand = (tokenAddress: string) => {
 	};
 };
 
-/**
- * command: /spike
- * =====================
- * Display price chart for SPIKE token
- */
 export const spike = async (): Promise<void> => {
 	bot.command("spike", createTokenChartCommand(SPIKE_TOKEN_ADDRESS));
 };
 
-/**
- * command: /josh
- * =====================
- * Display price chart for JOSH token
- */
 export const josh = async (): Promise<void> => {
 	bot.command("josh", createTokenChartCommand(JOSH_TOKEN_ADDRESS));
 };
 
-/**
- * command: /babyjosh
- * =====================
- * Display price chart for BABYJOSH token
- */
 export const babyjosh = async (): Promise<void> => {
 	bot.command("babyjosh", createTokenChartCommand(BABYJOSH_TOKEN_ADDRESS));
 };

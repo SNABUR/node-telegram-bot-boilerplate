@@ -3,6 +3,7 @@ import { PrismaClient as IndexerPrismaClient } from "../../../amm_indexer/prisma
 import cron from "node-cron";
 import bot from "../functions/telegraf.js";
 import { Decimal } from "@prisma/client/runtime/library";
+import cache from "./cache.js";
 
 // --- Configuración ---
 const POLLING_INTERVAL_SECONDS = 30;
@@ -94,14 +95,22 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
  * Busca todas las configuraciones de monitores activos y las procesa.
  */
 async function checkAllMonitors() {
-    const activeMonitors = await botPrisma.groupConfiguration.findMany({
-        where: {
-            spikeMonitorEnabled: true,
-        },
-        include: {
-            spikeMonitorToken: true,
-        },
-    });
+    const cacheKey = 'active-monitor-configs';
+    let activeMonitors = cache.get<any[]>(cacheKey);
+
+    if (!activeMonitors) {
+        const monitorsFromDb = await botPrisma.groupConfiguration.findMany({
+            where: {
+                spikeMonitorEnabled: true,
+            },
+            include: {
+                spikeMonitorToken: true,
+            },
+        });
+        // Cache for 60 seconds
+        cache.set(cacheKey, monitorsFromDb, 60);
+        activeMonitors = monitorsFromDb;
+    }
 
     if (activeMonitors.length > 0) {
         await Promise.all(activeMonitors.map(config => checkAndNotify(config)));

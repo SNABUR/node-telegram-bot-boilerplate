@@ -34,7 +34,6 @@
 		"stop-forever": "forever stop dist/core/bot.js",
 		"dev": "ts-node scripts/configs.ts && ts-node scripts/debug.ts --enable && ts-node scripts/rmdist.ts && nodemon --exec 'ts-node -r tsconfig-paths/register --compiler typescript app/core/bot.ts'",
 		"build": "tsc && prisma generate",
-		
 		"release": "ts-node scripts/configs.ts && ts-node scripts/debug.ts --disable && npm run build && tsc --declaration --emitDeclarationOnly",
 		"test": "jest app",
 		"docs": "git submodule update --recursive && markserv ./README.md",
@@ -65,6 +64,7 @@
 		"forever": "^1.0.1",
 		"localtunnel": "^1.8.3",
 		"lowdb": "^1.0.0",
+		"node-cache": "^5.1.2",
 		"node-cron": "^4.2.1",
 		"puppeteer": "^24.16.0",
 		"telegraf": "^4.4.2",

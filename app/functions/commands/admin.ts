@@ -1,6 +1,17 @@
 import bot from "../telegraf.js";
 import { isAdmin } from '../helpers/isAdmin';
 import prisma from '../../lib/prisma';
+import cache from '../../lib/cache.js';
+
+/**
+ * Invalidates all relevant caches for a given chat group.
+ * @param {number | string} chatId The ID of the chat to invalidate.
+ */
+const invalidateGroupCache = (chatId: number | string) => {
+    cache.del(`group-config-${chatId}`);
+    cache.del('active-monitor-configs');
+    console.log(`Cache invalidated for chat ID: ${chatId}`);
+};
 
 export const chatid = async (): Promise<void> => {
   bot.command('chatid', async (ctx: any) => {
@@ -46,6 +57,8 @@ export const settoken = async (): Promise<void> => {
         create: { chatId: ctx.chat.id, spikeMonitorTokenId: token.id, spikeMonitorEnabled: true },
       });
 
+      invalidateGroupCache(ctx.chat.id);
+
       await ctx.reply(`The token for the spike monitor has been set to: ${token.symbol} (${token.address})`);
     } catch (error) {
       console.error(error);
@@ -76,7 +89,6 @@ export const monitor = async (): Promise<void> => {
       let statusMessage = newState ? 'Enabled' : 'Disabled';
 
       if (newState) {
-        // If enabled, capture the current thread ID.
         const threadId = ctx.message?.message_thread_id?.toString();
         updateData.spikeMonitorThreadId = threadId;
         if (threadId) {
@@ -90,6 +102,8 @@ export const monitor = async (): Promise<void> => {
         create: { chatId: ctx.chat.id, ...updateData },
       });
 
+      invalidateGroupCache(ctx.chat.id);
+
       await ctx.reply(`The spike monitor has been ${statusMessage}.`);
     } catch (error) {
       console.error(error);
@@ -98,11 +112,6 @@ export const monitor = async (): Promise<void> => {
   });
 };
 
-/**
- * Handles the /setgif command.
- * Sets a custom GIF URL for spike monitor notifications.
- * @param {string} gifUrl - The direct URL to the GIF.
- */
 export const setgif = async (): Promise<void> => {
   bot.command('setgif', async (ctx: any) => {
     if (ctx.chat.type === 'private') {
@@ -124,6 +133,8 @@ export const setgif = async (): Promise<void> => {
         update: { spikeMonitorGifUrl: gifUrl },
         create: { chatId: ctx.chat.id, spikeMonitorGifUrl: gifUrl },
       });
+
+      invalidateGroupCache(ctx.chat.id);
 
       await ctx.reply(`The GIF for spike notifications has been set.`);
     } catch (error) {

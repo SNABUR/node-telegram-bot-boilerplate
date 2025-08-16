@@ -1,37 +1,6 @@
-✔ Generated Prisma Client (v6.13.0) to .\dist\generated\supabase in 106ms
-
-Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-
-Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-
-node:internal/modules/cjs/loader:1228
-  throw err;
-  ^
-
-Error: Cannot find module '../generated/prisma/index.cjs'
-Require stack:
-- D:\bot_telegram_index\telegram_bot\dist\lib\prisma.js
-- D:\bot_telegram_index\telegram_bot\dist\functions\commands\chart.js
-- D:\bot_telegram_index\telegram_bot\dist\functions\commands.js
-- D:\bot_telegram_index\telegram_bot\dist\core\bot.js
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)
-    at Module._resolveFilename (D:\bot_telegram_index\telegram_bot\node_modules\tsconfig-paths\lib\register.js:103:40)
-    at Module._load (node:internal/modules/cjs/loader:1051:27)
-    at Module.require (node:internal/modules/cjs/loader:1311:19)
-    at require (node:internal/modules/helpers:179:18)
-    at Object.<anonymous> (D:\bot_telegram_index\telegram_bot\dist\lib\prisma.js:3:21)
-    at Module._compile (node:internal/modules/cjs/loader:1469:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
-    at Module.load (node:internal/modules/cjs/loader:1288:32)
-    at Module._load (node:internal/modules/cjs/loader:1104:12) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [
-    'D:\\bot_telegram_index\\telegram_bot\\dist\\lib\\prisma.js',
-    'D:\\bot_telegram_index\\telegram_bot\\dist\\functions\\commands\\chart.js',
-    'D:\\bot_telegram_index\\telegram_bot\\dist\\functions\\commands.js',
-    'D:\\bot_telegram_index\\telegram_bot\\dist\\core\\bot.js'
-  ]
-}
-
-Node.js v20.17.0
-PS D:\bot_telegram_index\telegram_bot>
+Type '{ address: string; }' is not assignable to type 'TokenWhereUniqueInput'.
+  Type '{ address: string; }' is not assignable to type '{ id: number; wrappedAddress: string; network_address: TokenNetworkAddressCompoundUniqueInput; } & { id?: number | undefined; wrappedAddress?: string | undefined; ... 14 more ...; groupConfigurations?: GroupConfigurationListRelationFilter | undefined; }'.
+    Type '{ address: string; }' is missing the following properties from type '{ id: number; wrappedAddress: string; network_address: TokenNetworkAddressCompoundUniqueInput; }': id, wrappedAddress, network_addressts(2322)
+index.d.ts(4288, 5): The expected type comes from property 'where' which is declared here on type '{ select?: TokenSelect<DefaultArgs> | null | undefined; omit?: TokenOmit<DefaultArgs> | null | undefined; include?: TokenInclude<DefaultArgs> | null | undefined; where: TokenWhereUniqueInput; }'
+(property) where: Prisma.TokenWhereUniqueInput
+Filter, which Token to fetch.

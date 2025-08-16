@@ -1,6 +1,6 @@
 import bot from "../telegraf.js";
-import prisma from "../../lib/prisma.js";
 import { sendChart } from "./chart.js";
+import { getCachedGroupConfiguration } from "../common.js";
 
 /**
  * command: /price
@@ -10,17 +10,15 @@ import { sendChart } from "./chart.js";
 export const price = async (): Promise<void> => {
 	bot.command("price", async (ctx: any) => {
 		if (ctx.chat.type === 'private') {
-			return ctx.reply('Este comando solo funciona en grupos.');
+			return ctx.reply('This command only works in groups.');
 		}
 
 		try {
-			const groupConfig = await prisma.groupConfiguration.findUnique({
-				where: { chatId: ctx.chat.id },
-				include: { spikeMonitorToken: true },
-			});
+            // Use the cached function to get the group configuration
+			const groupConfig = await getCachedGroupConfiguration(ctx.chat.id);
 
 			if (!groupConfig || !groupConfig.spikeMonitorToken) {
-				return ctx.reply('No se ha configurado un token para este grupo. Un administrador puede configurar uno usando /settoken <token_address>');
+				return ctx.reply('No token has been configured for this group. An admin can set one using /settoken <token_address>');
 			}
 
 			const tokenAddress = groupConfig.spikeMonitorToken.address;
@@ -29,7 +27,7 @@ export const price = async (): Promise<void> => {
 
 		} catch (error) {
 			console.error("Error handling /price command:", error);
-			await ctx.reply("Ocurrió un error al procesar el comando.");
+			await ctx.reply("An error occurred while processing the command.");
 		}
 	});
 };
