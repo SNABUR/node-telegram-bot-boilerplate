@@ -1,6 +1,6 @@
 import { Chart, registerables } from "chart.js";
 import { createCanvas } from "canvas";
-import { OhlcData } from "@app/generated/prisma";
+import { OhlcData } from "../../dist/generated/supabase";
 
 Chart.register(...registerables);
 

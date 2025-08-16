@@ -8,7 +8,6 @@ import {
 	SPIKE_TOKEN_ADDRESS,
 	JOSH_TOKEN_ADDRESS,
 	BABYJOSH_TOKEN_ADDRESS,
-	getUserPreference,
 	calculateMarketCap,
 } from "../common.js";
 
@@ -188,43 +187,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
  * =====================
  * Display price chart for a token pair
  */
-export const chart = async (): Promise<void> => {
-	bot.command("chart", async (ctx: any) => {
-		if (!ctx.message) {
-			return;
-		}
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
-		const userId = BigInt(ctx.from.id);
-		const args = ctx.message.text?.split(" ") || [];
-		let targetTokenAddress: string | undefined;
-		let targetTimeframe: string | undefined;
 
-		// Check for arguments
-		if (args.length > 1) {
-			targetTokenAddress = args[1];
-			if (args.length > 2) {
-				targetTimeframe = args[2];
-			}
-		}
-
-		const userPref = await getUserPreference(userId);
-		const tokenAddress = targetTokenAddress || userPref?.defaultTokenAddress;
-		const timeframe = targetTimeframe || userPref?.defaultTimeframe || "5m";
-
-		if (!tokenAddress) {
-			ctx.telegram.sendMessage(
-				ctx.message.chat.id,
-				"Please specify a token address (e.g., /chart <token_address>) or set a default with /settoken.",
-			);
-			return;
-		}
-
-		await sendChart(ctx, tokenAddress, timeframe);
-	});
-};
 
 const createTokenChartCommand = (tokenAddress: string) => {
 	return async (ctx: any) => {

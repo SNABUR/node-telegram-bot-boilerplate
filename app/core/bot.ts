@@ -19,18 +19,28 @@ bot.catch((err: any, ctx: any) => {
 
 (async () => {
 	try {
+    // Basic commands
 		await command.quit();
 		await command.start();
-		await command.sendPhoto();
-		await command.price();
 		await command.help();
-		await command.setToken();
-		await command.setTimeframe();
-		await command.chart();
+
+    // Price and chart commands
+		await command.price();
 		await command.spike();
 		await command.josh();
 		await command.babyjosh();
+
+	// Admin commands
+		await command.chatid();
+		await command.settoken();
+		await command.monitor();
+		await command.setgif();
+
+
+    // Callbacks
 		await command.chartCallback();
+
+    // Hears
 		await hears.text();
 
 		startSpikeMonitor(); // Start the SPIKE token monitor

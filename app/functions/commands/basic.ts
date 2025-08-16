@@ -1,44 +1,10 @@
 import bot from "../telegraf.js";
 import { Context } from "telegraf";
 import * as databases from "../databases.js";
-import { isAdmin } from "../common.js";
 
 /**
- * command: /quit
- * =====================
- * If user exit from bot
- *
- */
-export const quit = async (): Promise<void> => {
-	bot.command("quit", (ctx: any) => {
-		if (!ctx.message) {
-			return;
-		}
-		ctx.telegram.leaveChat(ctx.message.chat.id);
-		ctx.leaveChat();
-	});
-};
-
-/**
- * command: /photo
- * =====================
- * Send photo from picsum to chat
- *
- */
-export const sendPhoto = async (): Promise<void> => {
-	bot.command("photo", (ctx: any) => {
-		if (!ctx.message) {
-			return;
-		}
-		ctx.replyWithPhoto("https://picsum.photos/200/300/");
-	});
-};
-
-/**
- * command: /start
- * =====================
- * Send welcome message
- *
+ * Handles the /start command.
+ * Welcomes the user and registers them in the database.
  */
 export const start = async (): Promise<void> => {
 	bot.start((ctx: any) => {
@@ -49,38 +15,57 @@ export const start = async (): Promise<void> => {
 		if (!ctx.message) {
 			return;
 		}
-		ctx.telegram.sendMessage(ctx.message.chat.id, `Welcome! Try send /photo command or write any text`);
+		const welcomeMessage = `Welcome to the Price Bot! 🚀\n\nUse /help to see all available commands.`;
+		ctx.telegram.sendMessage(ctx.message.chat.id, welcomeMessage);
 	});
 };
 
 /**
- * command: /help
- * =====================
- * Display available commands
- *
+ * Handles the /help command.
+ * Displays a detailed list of all available commands for both users and admins.
  */
 export const help = async (): Promise<void> => {
 	bot.command("help", (ctx: Context) => {
 		if (!ctx.message) {
 			return;
 		}
+		// Ignore commands that are older than 2 minutes to prevent spam
 		const now = Math.floor(Date.now() / 1000);
 		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
+			return;
 		}
-		const helpMessage =
-			`Available commands:\n` +
-			`/start - Start the bot\n` +
-			`/help - Display this help message\n` +
-			`/price - Get the latest OHLC price data\n` +
-			`/photo - Get a random photo\n` +
-			`/chart [token_address] [timeframe] - Display price chart\n` +
-			`/spike - Display price chart for SPIKE token (1m timeframe)\n` +
-			`/josh - Display price chart for JOSH token (1m timeframe)\n` +
-			`/babyjosh - Display price chart for BABYJOSH token (1m timeframe)\n` +
-			`/settoken <token_address> - Set your default token for charts\n` +
-			`/settimeframe <timeframe> - Set your default timeframe for charts (e.g., 1m, 5m, 1h)\n` +
-			`/quit - Stop the bot`;
-		ctx.telegram.sendMessage(ctx.message.chat.id, helpMessage);
+
+		const helpMessage = `
+			*🤖 General Commands*
+
+			/start - Initializes the bot and shows a welcome message.
+			/help - Displays this help message.
+			/price - Shows the price chart for the token configured for this group.
+			/spike - Shortcut to show the price chart for the SPIKE token.
+			/babyjosh - Shortcut to show the price chart for the BABYJOSH token.
+
+			*🛠️ Admin Commands*
+
+			/monitor - Toggles the price spike monitor ON or OFF. When turning ON, alerts will be posted in the thread where the command is used.
+			/settoken <address> - Sets the token for the /price command and the spike monitor.
+			/setgif <url> - Sets a custom GIF for spike alert notifications.
+			/quit - Commands the bot to leave the chat.
+		`;
+
+		ctx.telegram.sendMessage(ctx.message.chat.id, helpMessage, { parse_mode: 'Markdown' });
+	});
+};
+
+/**
+ * Handles the /quit command.
+ * Forces the bot to leave the chat where the command is issued.
+ */
+export const quit = async (): Promise<void> => {
+	bot.command("quit", (ctx: any) => {
+		if (!ctx.message) {
+			return;
+		}
+		ctx.telegram.leaveChat(ctx.message.chat.id);
+		ctx.leaveChat();
 	});
 };

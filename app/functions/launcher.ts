@@ -11,8 +11,10 @@ import bot from "./telegraf.js";
 import config from "../configs/config.js";
 import fs from "fs";
 import localtunnel from "localtunnel";
+import { startSpikeMonitor } from "../lib/spikeMonitor.js";
 
 const launchPolling = async (): Promise<void> => {
+	startSpikeMonitor();
 	await bot.launch({ polling: config.poll } as any);
 };
 
@@ -52,6 +54,7 @@ const launchLocalTunnel = async (secretPath: string, port: number) => {
 };
 
 const launchWebhook = async (): Promise<void> => {
+	startSpikeMonitor();
 	const { port, url, selfSigned } = config.webhook;
 	const secretPath = `/telegraf/${bot.secretPathComponent()}`;
 

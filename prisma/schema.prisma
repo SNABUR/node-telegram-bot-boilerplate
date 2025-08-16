@@ -1,6 +1,6 @@
 generator client {
     provider = "prisma-client-js"
-    output   = "../app/generated/prisma"
+    output   = "../dist/generated/supabase"
 }
 
 datasource db {
@@ -51,6 +51,9 @@ model Token {
     pairsAsToken0 Pair[] @relation("token0")
     pairsAsToken1 Pair[] @relation("token1")
 
+    // Relación a configuraciones de grupo que usan este token
+    groupConfigurations GroupConfiguration[]
+
     createdAt DateTime @default(now())
 
     @@unique([network, address])
@@ -84,20 +87,20 @@ model Pair {
 model OhlcData {
     id Int @id @default(autoincrement())
 
-    network   String
-    ammSource String
-    timeframe String
-    timestamp DateTime
+    network       String
+    ammSource     String
+    timeframe     String
+    timestamp     DateTime
 
-    open       Decimal
-    high       Decimal
-    low        Decimal
-    close      Decimal
-    volume     Decimal
-    tradeCount Int
+    open          Decimal
+    high          Decimal
+    low           Decimal
+    close         Decimal
+    volume        Decimal
+    tradeCount    Int
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 
     token0Address String
     token1Address String
@@ -109,9 +112,19 @@ model OhlcData {
     @@index([network, token0Address, token1Address, timeframe, timestamp(sort: Desc)])
 }
 
-model UserPreference {
-    id                  Int     @id @default(autoincrement())
-    userId              BigInt  @unique // Telegram user ID
-    defaultTokenAddress String? // The address of the non-SupraCoin token
-    defaultTimeframe    String? // e.g., "1m", "5m", "1h"
+// Modelo modificado para la configuración de un grupo
+model GroupConfiguration {
+    // El ID del chat de Telegram ahora es la clave primaria.
+    chatId BigInt @id
+
+    // Campos para el monitor de Spikes
+    spikeMonitorEnabled   Boolean @default(false)
+    spikeMonitorTokenId   Int? // El token a monitorear
+    spikeMonitorThreadId  String? // El "topic" o hilo donde se notificará
+    spikeMonitorGifUrl    String? // URL del GIF para las notificaciones
+    spikeMonitorTimeframe Int?    @default(2) // Ventana de tiempo en minutos
+    spikeMonitorInterval  Int?    @default(30) // Intervalo de chequeo en segundos
+
+    // Relación con el token a monitorear
+    spikeMonitorToken Token? @relation(fields: [spikeMonitorTokenId], references: [id])
 }

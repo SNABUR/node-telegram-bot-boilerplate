@@ -16,6 +16,7 @@ export * from "./commands/basic.js";
 export * from "./commands/chart.js";
 export * from "./commands/preferences.js";
 export * from "./commands/price.js";
+export * from "./commands/admin.js";
 export * from "./callbacks/chart.js";
 
 /**

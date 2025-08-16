@@ -1,57 +1,35 @@
 import bot from "../telegraf.js";
-import { Context } from "telegraf";
 import prisma from "../../lib/prisma.js";
+import { sendChart } from "./chart.js";
 
 /**
  * command: /price
  * =====================
- * Get OHLC price data
- *
+ * Display price chart for the token configured for the group
  */
 export const price = async (): Promise<void> => {
-	bot.command("price", async (ctx: Context) => {
-		if (!ctx.message) {
-			return;
+	bot.command("price", async (ctx: any) => {
+		if (ctx.chat.type === 'private') {
+			return ctx.reply('Este comando solo funciona en grupos.');
 		}
-		const now = Math.floor(Date.now() / 1000);
-		if (now - ctx.message.date > 120) {
-			return; // Ignore old commands
-		}
+
 		try {
-			const latestOhlc = await prisma.ohlcData.findFirst({
-				orderBy: {
-					timestamp: "desc",
-				},
+			const groupConfig = await prisma.groupConfiguration.findUnique({
+				where: { chatId: ctx.chat.id },
+				include: { spikeMonitorToken: true },
 			});
 
-			if (latestOhlc) {
-				const token0 = await prisma.token.findFirst({ where: { address: latestOhlc.token0Address } });
-				const token1 = await prisma.token.findFirst({ where: { address: latestOhlc.token1Address } });
+			if (!groupConfig || !groupConfig.spikeMonitorToken) {
+				return ctx.reply('No se ha configurado un token para este grupo. Un administrador puede configurar uno usando /settoken <token_address>');
+			}
 
-				if (token0 && token1) {
-					const message =
-						`Latest Price for ${token0.symbol}/${token1.symbol}:\n` +
-						`Open: ${latestOhlc.open}\n` +
-						`High: ${latestOhlc.high}\n` +
-						`Low: ${latestOhlc.low}\n` +
-						`Close: ${latestOhlc.close}\n` +
-						`Volume: ${latestOhlc.volume}\n` +
-						`Timestamp: ${latestOhlc.timestamp.toLocaleString()}`;
-					ctx.reply(message, { reply_parameters: { message_id: ctx.message.message_id } });
-				} else {
-					ctx.reply("Could not find token data for the latest price.", {
-						reply_parameters: { message_id: ctx.message.message_id },
-					});
-				}
-			} else {
-				ctx.reply("No price data available.", { reply_parameters: { message_id: ctx.message.message_id } });
-			}
+			const tokenAddress = groupConfig.spikeMonitorToken.address;
+			const timeframe = "5m"; // Default to 5m
+			await sendChart(ctx, tokenAddress, timeframe);
+
 		} catch (error) {
-			console.error("Error fetching price data:", error);
-			if (!ctx.message) {
-				return;
-			}
-			ctx.telegram.sendMessage(ctx.message.chat.id, "An error occurred while fetching price data.");
+			console.error("Error handling /price command:", error);
+			await ctx.reply("Ocurrió un error al procesar el comando.");
 		}
 	});
 };

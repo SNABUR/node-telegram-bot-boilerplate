@@ -1,30 +1,11 @@
 import config from "../configs/config.js";
 import prisma from "../lib/prisma.js";
-import { Prisma, UserPreference } from "@app/generated/prisma/index.js";
+import { Prisma } from "../../dist/generated/supabase";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
 export const SPIKE_TOKEN_ADDRESS = config.tokens.SPIKE_TOKEN_ADDRESS;
 export const JOSH_TOKEN_ADDRESS = config.tokens.JOSH_TOKEN_ADDRESS;
 export const BABYJOSH_TOKEN_ADDRESS = config.tokens.BABYJOSH_TOKEN_ADDRESS;
-
-// Helper function to get user preferences
-export const getUserPreference = async (userId: bigint): Promise<UserPreference | null> => {
-	return prisma.userPreference.findUnique({
-		where: { userId: userId },
-	});
-};
-
-// Helper function to set user preferences
-export const setUserPreference = async (
-	userId: bigint,
-	data: { defaultTokenAddress?: string; defaultTimeframe?: string },
-): Promise<UserPreference> => {
-	return prisma.userPreference.upsert({
-		where: { userId: userId },
-		update: data,
-		create: { userId: userId, ...data },
-	});
-};
 
 // Helper function to check if a user is an admin
 export const isAdmin = async (ctx: any): Promise<boolean> => {
@@ -74,6 +55,7 @@ export const calculateMarketCap = async (
 			select: {
 				close: true,
 				token0Address: true, // Include to know the price orientation
+				token1Address: true, // Include to know the price orientation
 			},
 		});
 
