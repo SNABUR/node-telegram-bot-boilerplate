@@ -1,6 +1,43 @@
-Type '{ address: string; }' is not assignable to type 'TokenWhereUniqueInput'.
-  Type '{ address: string; }' is not assignable to type '{ id: number; wrappedAddress: string; network_address: TokenNetworkAddressCompoundUniqueInput; } & { id?: number | undefined; wrappedAddress?: string | undefined; ... 14 more ...; groupConfigurations?: GroupConfigurationListRelationFilter | undefined; }'.
-    Type '{ address: string; }' is missing the following properties from type '{ id: number; wrappedAddress: string; network_address: TokenNetworkAddressCompoundUniqueInput; }': id, wrappedAddress, network_addressts(2322)
-index.d.ts(4288, 5): The expected type comes from property 'where' which is declared here on type '{ select?: TokenSelect<DefaultArgs> | null | undefined; omit?: TokenOmit<DefaultArgs> | null | undefined; include?: TokenInclude<DefaultArgs> | null | undefined; where: TokenWhereUniqueInput; }'
-(property) where: Prisma.TokenWhereUniqueInput
-Filter, which Token to fetch.
+
+Spike Monitor service started. Checking every 30 seconds for spikes >= 0%.
+Bot starting...
+Spike Monitor service started. Checking every 30 seconds for spikes >= 0%.
+Bot stopped.
+Error updating chart: TelegramError: 400: Bad Request: can't parse entities: Character '=' is reserved and must be escaped with the preceding '\'
+    at Telegram.callApi (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\core\network\client.js:315:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async sendChart (D:\bot_telegram_index\telegram_bot\dist\functions\commands\chart.js:96:17)
+    at async D:\bot_telegram_index\telegram_bot\dist\functions\commands\chart.js:154:9
+    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21 {
+  response: {
+    ok: false,
+    error_code: 400,
+    description: "Bad Request: can't parse entities: Character '=' is reserved and must be escaped with the preceding '\\'"
+  },
+  on: {
+    method: 'sendPhoto',
+    payload: {
+      chat_id: -1002468844607,
+      photo: [Object],
+      message_thread_id: 11541,
+      caption: '📊 *SPIKE Price Information*\n' +
+        '\n' +
+        '• 1 SUPRA = 11822563\\.239 SPIKE\n' +
+        '• 1 SPIKE = 0\\.00000008 SUPRA\n' +
+        '💹 *Market Cap:* $37,081\\.64\n' +
+        '🔢 *Supply:* 13,700,000,000,000,000\n' +
+        '\n' +
+        '📈 *Price Changes*\n' +
+        '• 5m: \\-2\\.67% 📉\n' +
+        '⏰ *Last Updated:* 16/8/2025, 10:40:00 p\\. m\\.',
+      parse_mode: 'MarkdownV2',
+      reply_markup: [Object],
+      reply_to_message_id: 17718
+    }
+  }
+}

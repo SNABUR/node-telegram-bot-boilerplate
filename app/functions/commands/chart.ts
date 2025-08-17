@@ -78,10 +78,10 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 		const { marketCap, maxSupply } = await calculateMarketCap(tokenAddress);
 
 		let caption = `📊 *${escapeMarkdownV2(targetToken.symbol)} Price Information*\n\n`;
-		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \= ${escapeMarkdownV2(
+		caption += `• 1 ${escapeMarkdownV2(supraCoin.symbol)} \\= ${escapeMarkdownV2(
 			currentPrice !== 0 ? (1 / currentPrice).toFixed(targetToken.decimals > 8 ? 8 : 3) : "N/A",
 		)} ${escapeMarkdownV2(targetToken.symbol)}\n`;
-		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \= ${escapeMarkdownV2(
+		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \\= ${escapeMarkdownV2(
 			currentPrice.toFixed(8),
 		)} ${escapeMarkdownV2(supraCoin.symbol)}\n`;
 		caption += `💹 *Market Cap:* \$${escapeMarkdownV2(
