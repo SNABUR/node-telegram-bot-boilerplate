@@ -84,7 +84,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 		caption += `• 1 ${escapeMarkdownV2(targetToken.symbol)} \\= ${escapeMarkdownV2(
 			currentPrice.toFixed(8),
 		)} ${escapeMarkdownV2(supraCoin.symbol)}\n`;
-		caption += `💹 *Market Cap:* \$${escapeMarkdownV2(
+		caption += `💹 *Market Cap:* $${escapeMarkdownV2(
 			marketCap !== null
 				? marketCap.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 				: "0",

@@ -54,12 +54,28 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
         });
 
         if (ohlcData) {
-            const { open, close, volume } = ohlcData;
-            if (open.equals(0)) return;
+            const { open, close, volume, timestamp } = ohlcData;
+            if (open.equals(0)) {
+                return;
+            }
+
+            const lastAlertedTimestampCacheKey = `last-alerted-timestamp-${tokenAddress}`;
+            const lastAlertedTimestamp = cache.get<Date>(lastAlertedTimestampCacheKey);
+
+            if (lastAlertedTimestamp && timestamp.getTime() <= lastAlertedTimestamp.getTime()) {
+                return;
+            }
 
             const percentageChange = close.sub(open).div(open).mul(100);
 
             if (percentageChange.abs().gte(SPIKE_THRESHOLD_PERCENTAGE)) {
+                const otherTokenAddress = ohlcData.token0Address === tokenAddress
+                    ? ohlcData.token1Address
+                    : ohlcData.token0Address;
+
+                const chartUrl = `https://chart.spikey.fun/es/5m/${tokenAddress}`;
+                const swapUrl = `https://swap.spikey.fun/en?inputCurrency=${otherTokenAddress}&outputCurrency=${tokenAddress}`;
+
                 const changeIcon = percentageChange.gte(0) ? "📈" : "📉";
                 const sign = percentageChange.gte(0) ? "+" : "";
                 const formattedChange = `${sign}${percentageChange.toFixed(2)}%`;
@@ -71,9 +87,10 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
 `*${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` +
 `A price change of *${formattedChange}* was detected in the last ${TIME_WINDOW_MINUTES} minute(s).\n\n` +
 `*Current Price:* ${priceFormatted}\n` +
-`*Volume:* ${volumeFormatted}`;
+`*Volume:* ${volumeFormatted}\n\n` +
+`[Chart](${chartUrl}) | [Swap](${swapUrl})`;
 
-                const gifUrl = spikeMonitorGifUrl || "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3l2bnRzNjd6eXo2dGtyZ3g2cTYxY2Y2Y21pY2hnbWN6Y2I1bW5pbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YkYk5A4E3d3y8/giphy.gif";
+                const gifUrl = spikeMonitorGifUrl || "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3NmaTlycGY4dmpuenVuaGZ6ZG16NTlhcHNmYjBhaW0xNnByNnNiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFrsaK0gIRY9V70W2v/giphy.gif";
                 const targetChatId = String(chatId);
                 const targetThreadId = spikeMonitorThreadId ? Number(spikeMonitorThreadId) : undefined;
 
@@ -82,6 +99,8 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                     parse_mode: "Markdown",
                     message_thread_id: targetThreadId,
                 });
+
+                cache.set(lastAlertedTimestampCacheKey, timestamp, TIME_WINDOW_MINUTES * 60);
 
                 console.log(`Spike alert sent for token ${tokenSymbol} to group ${targetChatId}`);
             }
@@ -95,7 +114,7 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
  * Busca todas las configuraciones de monitores activos y las procesa.
  */
 async function checkAllMonitors() {
-    const cacheKey = 'active-monitor-configs';
+    const cacheKey = "active-monitor-configs";
     let activeMonitors = cache.get<any[]>(cacheKey);
 
     if (!activeMonitors) {

@@ -1,43 +1,10 @@
+✅ New Trade Alert!
 
-Spike Monitor service started. Checking every 30 seconds for spikes >= 0%.
-Bot starting...
-Spike Monitor service started. Checking every 30 seconds for spikes >= 0%.
-Bot stopped.
-Error updating chart: TelegramError: 400: Bad Request: can't parse entities: Character '=' is reserved and must be escaped with the preceding '\'
-    at Telegram.callApi (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\core\network\client.js:315:19)
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async sendChart (D:\bot_telegram_index\telegram_bot\dist\functions\commands\chart.js:96:17)
-    at async D:\bot_telegram_index\telegram_bot\dist\functions\commands\chart.js:154:9
-    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
-    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
-    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
-    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
-    at async execute (D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
-    at async D:\bot_telegram_index\telegram_bot\node_modules\telegraf\lib\composer.js:519:21 {
-  response: {
-    ok: false,
-    error_code: 400,
-    description: "Bad Request: can't parse entities: Character '=' is reserved and must be escaped with the preceding '\\'"
-  },
-  on: {
-    method: 'sendPhoto',
-    payload: {
-      chat_id: -1002468844607,
-      photo: [Object],
-      message_thread_id: 11541,
-      caption: '📊 *SPIKE Price Information*\n' +
-        '\n' +
-        '• 1 SUPRA = 11822563\\.239 SPIKE\n' +
-        '• 1 SPIKE = 0\\.00000008 SUPRA\n' +
-        '💹 *Market Cap:* $37,081\\.64\n' +
-        '🔢 *Supply:* 13,700,000,000,000,000\n' +
-        '\n' +
-        '📈 *Price Changes*\n' +
-        '• 5m: \\-2\\.67% 📉\n' +
-        '⏰ *Last Updated:* 16/8/2025, 10:40:00 p\\. m\\.',
-      parse_mode: 'MarkdownV2',
-      reply_markup: [Object],
-      reply_to_message_id: 17718
-    }
-  }
-}
+👤 Buyer: [View Wallet](https://solscan.io/account/Gyg7pQqqnzQL6fmcRdoWHMxnPSuxctLtTPvoEJp887zJ)
+💸 Spent: (15.7 SUPRA)
+🪙 Received: 4,536,945 JONES
+📈 Market Cap: $33,953
+
+📊 [chartspikey](https://chart.spikey.fun/es/5m/0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c)
+⚡️ [Buy Now](https://swap.spikey.fun/en?inputCurrency=0x3db05342523bd72817b09f264761a7621eeb21d0960d9676ba5ce14651b17c43&outputCurrency=0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c)
+//0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c es el token es el que genero el trade alert
