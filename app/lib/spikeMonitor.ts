@@ -2,13 +2,13 @@ import { PrismaClient as BotPrismaClient, GroupConfiguration, Token } from "../.
 import { PrismaClient as IndexerPrismaClient } from "../../../amm_indexer/prisma/dist/generated/sqlite";
 import cron from "node-cron";
 import bot from "../functions/telegraf.js";
-import { Decimal } from "@prisma/client/runtime/library";
 import cache from "./cache.js";
 
 // --- Configuración ---
 const POLLING_INTERVAL_SECONDS = 30;
-const TIME_WINDOW_MINUTES = 2;
-const SPIKE_THRESHOLD_PERCENTAGE = 0; // 5% de cambio para considerarse un spike
+// Ya no necesitamos TIME_WINDOW_MINUTES para la consulta principal
+const INITIAL_LOOKBACK_MINUTES = 2; // Ventana para la primera vez que se ejecuta
+const SPIKE_THRESHOLD_PERCENTAGE = 0; // 5%
 
 // --- Conexiones a las Bases de Datos ---
 const botPrisma = new BotPrismaClient();
@@ -16,6 +16,7 @@ const indexerPrisma = new IndexerPrismaClient();
 
 /**
  * Verifica la actividad de precios para un grupo y notifica si hay un "spike".
+ * (Implementación con "Watermark")
  */
 async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: Token | null }) {
     if (!config.spikeMonitorEnabled || !config.spikeMonitorToken) {
@@ -29,11 +30,20 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
         spikeMonitorGifUrl,
     } = config;
 
-    const now = new Date();
-    const timeWindowStart = new Date(now.getTime() - TIME_WINDOW_MINUTES * 60 * 1000);
     const tokenAddress = spikeMonitorToken.address;
 
+    // --- LÓGICA DE WATERMARK ---
+    // 1. Obtener el timestamp del último registro procesado desde la caché.
+    const lastProcessedTimestampCacheKey = `last-processed-timestamp-${tokenAddress}`;
+    let lastProcessedTimestamp = cache.get<Date>(lastProcessedTimestampCacheKey);
+
+    // Si no hay nada en caché (primera ejecución), miramos hacia atrás un tiempo prudencial.
+    const queryStartTime = lastProcessedTimestamp
+        ? lastProcessedTimestamp
+        : new Date(new Date().getTime() - INITIAL_LOOKBACK_MINUTES * 60 * 1000);
+
     try {
+        // 2. Consultar todos los registros MÁS NUEVOS que el último procesado.
         const recentOhlcData = await indexerPrisma.ohlcData.findMany({
             where: {
                 OR: [
@@ -42,33 +52,25 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                 ],
                 timeframe: "1m",
                 timestamp: {
-                    gte: timeWindowStart,
+                    gt: queryStartTime, // 'gt' (greater than) en lugar de 'gte'
                 },
                 volume: {
                     gt: 0,
                 },
             },
             orderBy: {
-                timestamp: "asc", // Process oldest first
+                timestamp: "asc", // Crucial: procesar en orden cronológico
             },
         });
 
+        // Si no hay datos nuevos, no hacemos nada.
         if (recentOhlcData.length === 0) {
             return;
         }
-        
-        const lastAlertedTimestampCacheKey = `last-alerted-timestamp-${tokenAddress}`;
-        let lastAlertedTimestamp = cache.get<Date>(lastAlertedTimestampCacheKey);
-        console.log(`[Spike Monitor] Initial last alerted timestamp from cache for ${tokenAddress}: ${lastAlertedTimestamp}`);
 
+        // El bucle ahora solo procesa datos genuinamente nuevos.
         for (const ohlcData of recentOhlcData) {
             const { open, close, volume, timestamp } = ohlcData;
-            console.log(`[Spike Monitor] Processing OHLC data for ${tokenAddress}:`, JSON.stringify(ohlcData, null, 2));
-
-            if (lastAlertedTimestamp && timestamp.getTime() <= lastAlertedTimestamp.getTime()) {
-                console.log(`[Spike Monitor] Skipping alert for ${tokenAddress} because timestamp is not new.`);
-                continue;
-            }
 
             if (open.equals(0)) {
                 continue;
@@ -77,9 +79,9 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
             const percentageChange = close.sub(open).div(open).mul(100);
 
             if (percentageChange.abs().gte(SPIKE_THRESHOLD_PERCENTAGE)) {
-                console.log(`[Spike Monitor] Sending spike alert for ${tokenAddress} at timestamp ${timestamp}`);
-                const otherTokenAddress = ohlcData.token0Address === tokenAddress 
-                    ? ohlcData.token1Address 
+                // La lógica de envío de mensaje es la misma
+                const otherTokenAddress = ohlcData.token0Address === tokenAddress
+                    ? ohlcData.token1Address
                     : ohlcData.token0Address;
 
                 const chartUrl = `https://chart.spikey.fun/es/5m/${tokenAddress}`;
@@ -92,11 +94,11 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                 const volumeFormatted = volume.toFixed(2);
                 const tokenSymbol = spikeMonitorToken.symbol;
 
-                const message = 
-`🚨 *${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` + 
-`📈 *Change:* ${formattedChange} in the last ${TIME_WINDOW_MINUTES} min(s).\n` + 
-`💵 *Price:* ${priceFormatted}\n` + 
-`📊 *Volume:* ${volumeFormatted}\n\n` + 
+                const message =
+`🚨 *${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` +
+`📈 *Change:* ${formattedChange} in the last minute.\n` + // ajustado para ser más preciso
+`💵 *Price:* ${priceFormatted}\n` +
+`📊 *Volume:* ${volumeFormatted}\n\n` +
 `[📊 Chart](${chartUrl}) | [💸 Swap](${swapUrl})`;
 
                 const gifUrl = spikeMonitorGifUrl || "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3NmaTlycGY4dmpuenVuaGZ6ZG16NTlhcHNmYjBhaW0xNnByNnNiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFrsaK0gIRY9V70W2v/giphy.gif";
@@ -109,17 +111,24 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                     message_thread_id: targetThreadId,
                 });
 
-                // Immediately update cache and local variable
-                cache.set(lastAlertedTimestampCacheKey, timestamp, TIME_WINDOW_MINUTES * 60);
-                lastAlertedTimestamp = timestamp; 
-
                 console.log(`Spike alert sent for token ${tokenSymbol} to group ${targetChatId}`);
             }
         }
+
+        // --- LÓGICA DE WATERMARK ---
+        // 3. Actualizar el marcador con el timestamp del ÚLTIMO elemento del lote.
+        // El TTL (tercer parámetro) puede ser largo, ya que solo necesitamos el valor más reciente.
+        const newLatestTimestamp = recentOhlcData[recentOhlcData.length - 1].timestamp;
+        cache.set(lastProcessedTimestampCacheKey, newLatestTimestamp, 24 * 60 * 60); // Cache por 24 horas
+
     } catch (error) {
+        // Importante: Si hay un error, NO actualizamos el timestamp,
+        // para que el próximo intento vuelva a procesar estos datos.
         console.error(`Error checking for spikes for group ${chatId}:`, error);
     }
 }
+
+// ... El resto de tu código (checkAllMonitors, startSpikeMonitor) puede permanecer igual.
 
 /**
  * Busca todas las configuraciones de monitores activos y las procesa.
