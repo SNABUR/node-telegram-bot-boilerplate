@@ -34,7 +34,7 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
     const tokenAddress = spikeMonitorToken.address;
 
     try {
-        const ohlcData = await indexerPrisma.ohlcData.findFirst({
+        const recentOhlcData = await indexerPrisma.ohlcData.findMany({
             where: {
                 OR: [
                     { token0Address: tokenAddress },
@@ -49,28 +49,37 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                 },
             },
             orderBy: {
-                timestamp: "desc",
+                timestamp: "asc", // Process oldest first
             },
         });
 
-        if (ohlcData) {
-            const { open, close, volume, timestamp } = ohlcData;
-            if (open.equals(0)) {
-                return;
-            }
+        if (recentOhlcData.length === 0) {
+            return;
+        }
+        
+        const lastAlertedTimestampCacheKey = `last-alerted-timestamp-${tokenAddress}`;
+        let lastAlertedTimestamp = cache.get<Date>(lastAlertedTimestampCacheKey);
+        console.log(`[Spike Monitor] Initial last alerted timestamp from cache for ${tokenAddress}: ${lastAlertedTimestamp}`);
 
-            const lastAlertedTimestampCacheKey = `last-alerted-timestamp-${tokenAddress}`;
-            const lastAlertedTimestamp = cache.get<Date>(lastAlertedTimestampCacheKey);
+        for (const ohlcData of recentOhlcData) {
+            const { open, close, volume, timestamp } = ohlcData;
+            console.log(`[Spike Monitor] Processing OHLC data for ${tokenAddress}:`, JSON.stringify(ohlcData, null, 2));
 
             if (lastAlertedTimestamp && timestamp.getTime() <= lastAlertedTimestamp.getTime()) {
-                return;
+                console.log(`[Spike Monitor] Skipping alert for ${tokenAddress} because timestamp is not new.`);
+                continue;
+            }
+
+            if (open.equals(0)) {
+                continue;
             }
 
             const percentageChange = close.sub(open).div(open).mul(100);
 
             if (percentageChange.abs().gte(SPIKE_THRESHOLD_PERCENTAGE)) {
-                const otherTokenAddress = ohlcData.token0Address === tokenAddress
-                    ? ohlcData.token1Address
+                console.log(`[Spike Monitor] Sending spike alert for ${tokenAddress} at timestamp ${timestamp}`);
+                const otherTokenAddress = ohlcData.token0Address === tokenAddress 
+                    ? ohlcData.token1Address 
                     : ohlcData.token0Address;
 
                 const chartUrl = `https://chart.spikey.fun/es/5m/${tokenAddress}`;
@@ -83,12 +92,12 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                 const volumeFormatted = volume.toFixed(2);
                 const tokenSymbol = spikeMonitorToken.symbol;
 
-                const message =
-`*${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` +
-`A price change of *${formattedChange}* was detected in the last ${TIME_WINDOW_MINUTES} minute(s).\n\n` +
-`*Current Price:* ${priceFormatted}\n` +
-`*Volume:* ${volumeFormatted}\n\n` +
-`[Chart](${chartUrl}) | [Swap](${swapUrl})`;
+                const message = 
+`🚨 *${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` + 
+`📈 *Change:* ${formattedChange} in the last ${TIME_WINDOW_MINUTES} min(s).\n` + 
+`💵 *Price:* ${priceFormatted}\n` + 
+`📊 *Volume:* ${volumeFormatted}\n\n` + 
+`[📊 Chart](${chartUrl}) | [💸 Swap](${swapUrl})`;
 
                 const gifUrl = spikeMonitorGifUrl || "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3NmaTlycGY4dmpuenVuaGZ6ZG16NTlhcHNmYjBhaW0xNnByNnNiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFrsaK0gIRY9V70W2v/giphy.gif";
                 const targetChatId = String(chatId);
@@ -100,7 +109,9 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
                     message_thread_id: targetThreadId,
                 });
 
+                // Immediately update cache and local variable
                 cache.set(lastAlertedTimestampCacheKey, timestamp, TIME_WINDOW_MINUTES * 60);
+                lastAlertedTimestamp = timestamp; 
 
                 console.log(`Spike alert sent for token ${tokenSymbol} to group ${targetChatId}`);
             }
