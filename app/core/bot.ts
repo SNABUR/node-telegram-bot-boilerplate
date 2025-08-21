@@ -42,12 +42,7 @@ bot.catch((err: any, ctx: any) => {
 
     // Hears
 		await hears.text();
-
-		startSpikeMonitor(); // Start the SPIKE token monitor
-
-		console.log("Bot starting...");
 		await command.launch();
-		console.log("Bot stopped.");
 	} catch (error) {
 		console.error("Bot crashed with an error:", error);
 	}

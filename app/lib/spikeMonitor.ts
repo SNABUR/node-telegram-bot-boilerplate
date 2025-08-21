@@ -156,18 +156,10 @@ async function checkAllMonitors() {
     }
 }
 
-let isMonitorRunning = false;
-
 /**
  * Inicia el servicio cron que verifica periódicamente todos los monitores activos.
  */
 export const startSpikeMonitor = () => {
-    if (isMonitorRunning) {
-        console.log("Spike Monitor service is already running.");
-        return;
-    }
-
     cron.schedule(`*/${POLLING_INTERVAL_SECONDS} * * * * *`, checkAllMonitors);
-    isMonitorRunning = true;
     console.log(`Spike Monitor service started. Checking every ${POLLING_INTERVAL_SECONDS} seconds for spikes >= ${SPIKE_THRESHOLD_PERCENTAGE}%.`);
 };
