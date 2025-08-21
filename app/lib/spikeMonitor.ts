@@ -98,7 +98,7 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
 `🚨 *${tokenSymbol} Price Spike Alert!* ${changeIcon}\n\n` +
 `📈 *Change:* ${formattedChange} in the last minute.\n` + // ajustado para ser más preciso
 `💵 *Price:* ${priceFormatted}\n` +
-`📊 *Volume:* ${volumeFormatted}\n\n` +
+`📊 *Volume:* ${volumeFormatted} ${tokenSymbol} \n\n` +
 `[📊 Chart](${chartUrl}) | [💸 Swap](${swapUrl})`;
 
                 const gifUrl = spikeMonitorGifUrl || "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3NmaTlycGY4dmpuenVuaGZ6ZG16NTlhcHNmYjBhaW0xNnByNnNiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFrsaK0gIRY9V70W2v/giphy.gif";
