@@ -119,10 +119,17 @@ export const calculateMarketCap = async (
 		}
 
 		const supraPriceInUsd = new Prisma.Decimal(config.prices.SUPRA_USD_PRICE);
-		const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString());
+		
+        const decimals = targetToken.decimals;
+        const divisor = new Prisma.Decimal(10).pow(decimals);
+
+        const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString()).div(divisor);
 
 		const marketCap = tokenPriceInSupra.mul(supraPriceInUsd).mul(circulatingSupply);
-		const maxSupply = targetToken.maxSupply ? new Prisma.Decimal(targetToken.maxSupply.toString()) : null;
+		
+        const maxSupply = targetToken.maxSupply
+            ? new Prisma.Decimal(targetToken.maxSupply.toString()).div(divisor)
+            : null;
 
 		return {
 			marketCap: marketCap.toNumber(),
