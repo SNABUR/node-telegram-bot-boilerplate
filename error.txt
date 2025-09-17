@@ -1,11 +1,16 @@
-Strings must use doublequote.eslintquotes
-module "dns"
-The node:dns module enables name resolution. For example, use it to look up IP addresses of host names.
-
-Although named for the Domain Name System (DNS), it does not always use the DNS protocol for lookups. lookup uses the operating system facilities to perform name resolution. It may not need to perform any network communication. To perform name resolution the way other applications on the same system do, use lookup.
-
-import dns from 'node:dns';
-
-dns.lookup('example.org', (err, address, family) => {
-  console.log('address: %j family: IPv%s', address, family);
-});
+Spike Monitor service started. Checking every 30 seconds for spikes >= 0%.
+Fetching SUPRA price in USD from Supra oracle...
+Error in API response (404) for get_price:
+Error calling view function get_price: Error: Supra API request failed with status 404.
+    at callViewFunction (D:\indexer_and_bot_telegram\telegram_bot\dist\lib\viewFunction.js:23:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async getSupraPrice (D:\indexer_and_bot_telegram\telegram_bot\dist\lib\supra.js:16:26)
+    at async getSupraPriceInUSD (D:\indexer_and_bot_telegram\telegram_bot\dist\lib\supra.js:42:19)
+    at async calculateMarketCap (D:\indexer_and_bot_telegram\telegram_bot\dist\functions\common.js:108:33)
+    at async sendChart (D:\indexer_and_bot_telegram\telegram_bot\dist\functions\commands\chart.js:58:42)
+    at async D:\indexer_and_bot_telegram\telegram_bot\dist\functions\callbacks\chart.js:36:13
+    at async execute (D:\indexer_and_bot_telegram\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+    at async D:\indexer_and_bot_telegram\telegram_bot\node_modules\telegraf\lib\composer.js:519:21
+    at async execute (D:\indexer_and_bot_telegram\telegram_bot\node_modules\telegraf\lib\composer.js:518:17)
+Error calling view function get_price for pair 500: Supra API request failed with status 404.
+Could not retrieve a valid Supra price from the oracle. Market cap calculation will be incorrect.

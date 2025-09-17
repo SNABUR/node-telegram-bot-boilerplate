@@ -2,6 +2,7 @@ import config from "../configs/config.js";
 import prisma from "../lib/prisma.js";
 import cache from "../lib/cache.js";
 import { Prisma, Token, GroupConfiguration } from "../../dist/generated/supabase";
+import { getSupraPriceInUSD } from "../lib/supra.js";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
 export const SPIKE_TOKEN_ADDRESS = config.tokens.SPIKE_TOKEN_ADDRESS;
@@ -118,17 +119,23 @@ export const calculateMarketCap = async (
 			tokenPriceInSupra = new Prisma.Decimal(1).div(tokenPriceInSupra);
 		}
 
-		const supraPriceInUsd = new Prisma.Decimal(config.prices.SUPRA_USD_PRICE);
-		
-        const decimals = targetToken.decimals;
-        const divisor = new Prisma.Decimal(10).pow(decimals);
+		const supraPriceInUsd = await getSupraPriceInUSD();
+        if (supraPriceInUsd.isZero()) {
+            console.error("Could not retrieve a valid Supra price from the oracle. Market cap calculation will be incorrect.");
+            return { marketCap: null, maxSupply: null };
+        }
 
-        const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString()).div(divisor);
+        // Price of 1 token in USD
+        const tokenPriceUsd = tokenPriceInSupra.mul(supraPriceInUsd);
 
-		const marketCap = tokenPriceInSupra.mul(supraPriceInUsd).mul(circulatingSupply);
-		
+        // Supply is already in human-readable units from the DB
+        const circulatingSupply = new Prisma.Decimal(targetToken.circulatingSupply.toString());
+
+        // Market cap is a direct multiplication
+        const marketCap = tokenPriceUsd.mul(circulatingSupply);
+
         const maxSupply = targetToken.maxSupply
-            ? new Prisma.Decimal(targetToken.maxSupply.toString()).div(divisor)
+            ? new Prisma.Decimal(targetToken.maxSupply.toString())
             : null;
 
 		return {
