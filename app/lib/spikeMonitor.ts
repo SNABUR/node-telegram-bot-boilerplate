@@ -1,5 +1,5 @@
 import { PrismaClient as BotPrismaClient, GroupConfiguration, Token } from "../../dist/generated/supabase";
-import { PrismaClient as IndexerPrismaClient } from "../../../amm_indexer/prisma/dist/generated/sqlite";
+import { PrismaClient as IndexerPrismaClient } from "../../../amm_indexer/prisma/generated/sqlite";
 import cron from "node-cron";
 import bot from "../functions/telegraf.js";
 import cache from "./cache.js";
@@ -35,7 +35,7 @@ async function checkAndNotify(config: GroupConfiguration & { spikeMonitorToken: 
     // --- LÓGICA DE WATERMARK ---
     // 1. Obtener el timestamp del último registro procesado desde la caché.
     const lastProcessedTimestampCacheKey = `last-processed-timestamp-${tokenAddress}`;
-    let lastProcessedTimestamp = cache.get<Date>(lastProcessedTimestampCacheKey);
+    const lastProcessedTimestamp = cache.get<Date>(lastProcessedTimestampCacheKey);
 
     // Si no hay nada en caché (primera ejecución), miramos hacia atrás un tiempo prudencial.
     const queryStartTime = lastProcessedTimestamp

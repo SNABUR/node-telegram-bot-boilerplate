@@ -1,7 +1,8 @@
+import { setDefaultResultOrder } from "dns";
+setDefaultResultOrder("ipv4first");
 import bot from "../functions/telegraf.js";
 import * as command from "../functions/commands.js";
 import * as hears from "../functions/hears.js";
-import { startSpikeMonitor } from "../lib/spikeMonitor.js";
 
 /**
  * Start bot

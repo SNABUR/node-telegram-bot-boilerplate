@@ -1,10 +1,11 @@
-✅ New Trade Alert!
+Strings must use doublequote.eslintquotes
+module "dns"
+The node:dns module enables name resolution. For example, use it to look up IP addresses of host names.
 
-👤 Buyer: [View Wallet](https://solscan.io/account/Gyg7pQqqnzQL6fmcRdoWHMxnPSuxctLtTPvoEJp887zJ)
-💸 Spent: (15.7 SUPRA)
-🪙 Received: 4,536,945 JONES
-📈 Market Cap: $33,953
+Although named for the Domain Name System (DNS), it does not always use the DNS protocol for lookups. lookup uses the operating system facilities to perform name resolution. It may not need to perform any network communication. To perform name resolution the way other applications on the same system do, use lookup.
 
-📊 [chartspikey](https://chart.spikey.fun/es/5m/0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c)
-⚡️ [Buy Now](https://swap.spikey.fun/en?inputCurrency=0x3db05342523bd72817b09f264761a7621eeb21d0960d9676ba5ce14651b17c43&outputCurrency=0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c)
-//0x8fd1550a61055c1406e04d1a0ddf7049d00c889b59f6823f21ca7d842e1eaf3c es el token es el que genero el trade alert
+import dns from 'node:dns';
+
+dns.lookup('example.org', (err, address, family) => {
+  console.log('address: %j family: IPv%s', address, family);
+});
