@@ -1,10 +1,17 @@
-import { Chart, registerables } from "chart.js";
 import { createCanvas } from "canvas";
 import { OhlcData } from "../../dist/generated/supabase";
 
-Chart.register(...registerables);
+let ChartClass: any;
+let isChartInitialized = false;
 
 export const generateOhlcChart = async (ohlcData: OhlcData[]): Promise<Buffer> => {
+	if (!isChartInitialized) {
+		const { Chart, registerables } = await import("chart.js");
+		Chart.register(...registerables);
+		ChartClass = Chart;
+		isChartInitialized = true;
+	}
+
 	const labels: string[] = [];
 	const closePrices: number[] = [];
 
@@ -27,7 +34,7 @@ export const generateOhlcChart = async (ohlcData: OhlcData[]): Promise<Buffer> =
 	ctx.fillStyle = "#ffffff";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-	new Chart(ctx as any, {
+	new ChartClass(ctx as any, {
 		type: "line",
 		data: {
 			labels: labels,

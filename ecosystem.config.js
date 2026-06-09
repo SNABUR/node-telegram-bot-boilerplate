@@ -1,8 +1,8 @@
 module.exports = {
   apps: [{
     name: "telegram-bot",
-    script: "npx",
-    args: "ts-node -r tsconfig-paths/register app/core/bot.ts",
+    script: "node",
+    args: "-r tsconfig-paths/register dist/core/bot.js",
     interpreter: "none",
     watch: false,
     max_memory_restart: '1G',
