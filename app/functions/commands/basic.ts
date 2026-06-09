@@ -16,7 +16,8 @@ export const start = async (): Promise<void> => {
 			return;
 		}
 		const welcomeMessage = `Welcome to the Price Bot! 🚀\n\nUse /help to see all available commands.`;
-		ctx.telegram.sendMessage(ctx.message.chat.id, welcomeMessage);
+		console.log("[BOT] /start command triggered by", ctx.update.message.from.id);
+		ctx.reply(welcomeMessage);
 	});
 };
 
@@ -52,7 +53,8 @@ export const help = async (): Promise<void> => {
 			/quit - Commands the bot to leave the chat.
 		`;
 
-		ctx.telegram.sendMessage(ctx.message.chat.id, helpMessage, { parse_mode: 'Markdown' });
+		console.log("[BOT] /help command triggered in chat", ctx.message.chat.id);
+		ctx.reply(helpMessage, { parse_mode: 'Markdown' });
 	});
 };
 
