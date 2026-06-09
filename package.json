@@ -22,14 +22,14 @@
 		"url": "https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/issues"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=22.13.0"
 	},
 	"scripts": {
-		"init": "npm install && husky install",
+		"init": "pnpm install && pnpm exec husky install",
 		"init:token": "ts-node scripts/configs.ts && ts-node scripts/init.ts",
 		"init:certs": "ts-node scripts/initCerts.ts",
-		"setup": "ts-node --skip-project scripts/setup.ts && ts-node --skip-project scripts/changelog.ts && npm run pre-commit",
-		"start": "npm run build && node -r tsconfig-paths/register dist/core/bot.js",
+		"setup": "ts-node --skip-project scripts/setup.ts && ts-node --skip-project scripts/changelog.ts && pnpm run pre-commit",
+		"start": "pnpm run build && node -r tsconfig-paths/register dist/core/bot.js",
 		"start-forever": "forever start dist/core/bot.js",
 		"stop-forever": "forever stop dist/core/bot.js",
 		"dev": "ts-node scripts/configs.ts && ts-node scripts/debug.ts --enable && ts-node scripts/rmdist.ts && nodemon --exec 'ts-node -r tsconfig-paths/register --compiler typescript app/core/bot.ts'",
@@ -37,8 +37,8 @@
 		"release": "ts-node scripts/configs.ts && ts-node scripts/debug.ts --disable && npm run build && tsc --declaration --emitDeclarationOnly",
 		"test": "jest app",
 		"docs": "git submodule update --recursive && markserv ./README.md",
-		"lint": "npm run lint-prettify && eslint . --cache --ext .ts,.js",
-		"lint-fix": "npm run lint-prettify && eslint . --cache --ext .ts,.js --fix",
+		"lint": "pnpm run lint-prettify && eslint . --cache --ext .ts,.js",
+		"lint-fix": "pnpm run lint-prettify && eslint . --cache --ext .ts,.js --fix",
 		"lint-prettify": "prettier --write --ignore-unknown '**/*.{ts,md,json}'",
 		"git-set-upstream": "git remote add upstream git@github.com:ptkdev-boilerplate/node-telegram-bot-boilerplate.git && git fetch upstream",
 		"git-pull-upstream": "git pull upstream main && git pull upstream beta && git pull upstream nightly",
@@ -49,15 +49,15 @@
 		"npm-publish-nightly": "git checkout nightly && npm publish --tag nightly",
 		"contributors-generate": "all-contributors generate",
 		"all-shields-generate": "all-shields-generate",
-		"pre-commit": "npm run contributors-generate && npm run all-shields-generate && npm run lint-fix && npm run test",
-		"pkg-clean": "rm -rf node_modules package-lock.json && npm install && husky install",
-		"pkg-update": "npm update",
-		"pkg-upgrade": "npx npm-check-updates -u && npm install && husky install",
+		"pre-commit": "pnpm run contributors-generate && pnpm run all-shields-generate && pnpm run lint-fix && pnpm run test",
+		"pkg-clean": "rm -rf node_modules package-lock.json && pnpm install && pnpm exec husky install",
+		"pkg-update": "pnpm update",
+		"pkg-upgrade": "pnpm exec npm-check-updates -u && pnpm install && pnpm exec husky install",
 		"prepare": "ts-patch install -s",
-		"pm2:start": "npx pm2 start ecosystem.config.js",
-		"pm2:stop": "npx pm2 stop ecosystem.config.js",
-		"pm2:restart": "npx pm2 restart ecosystem.config.js",
-		"pm2:logs": "npx pm2 logs"
+		"pm2:start": "pnpm exec pm2 start ecosystem.config.js",
+		"pm2:stop": "pnpm exec pm2 stop ecosystem.config.js",
+		"pm2:restart": "pnpm exec pm2 restart ecosystem.config.js",
+		"pm2:logs": "pnpm exec pm2 logs"
 	},
 	"dependencies": {
 		"canvas": "3.1.2",
@@ -126,5 +126,15 @@
 		"boilerplate",
 		"github-template"
 	],
-	"contributors": []
+	"contributors": [],
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@prisma/client",
+			"@prisma/engines",
+			"prisma",
+			"husky",
+			"ts-patch",
+			"puppeteer"
+		]
+	}
 }

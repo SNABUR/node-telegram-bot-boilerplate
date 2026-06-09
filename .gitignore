@@ -129,3 +129,12 @@ npm-debug.log
 /certs
 /generated/prisma
 .env
+
+# ===============================
+# Custom Additions
+# ===============================
+.env*
+!.env.example
+backups/
+tmp/
+.pnpm-store/
