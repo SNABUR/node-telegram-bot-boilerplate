@@ -25,6 +25,7 @@
 		"node": ">=22.13.0"
 	},
 	"scripts": {
+		"deploy": "pnpm install --frozen-lockfile && pnpm rebuild && pnpm run build && pnpm exec pm2 restart ecosystem.config.js",
 		"init": "pnpm install && pnpm exec husky install",
 		"init:token": "ts-node scripts/configs.ts && ts-node scripts/init.ts",
 		"init:certs": "ts-node scripts/initCerts.ts",
