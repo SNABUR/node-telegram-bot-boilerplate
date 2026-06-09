@@ -134,7 +134,9 @@
 			"prisma",
 			"husky",
 			"ts-patch",
-			"puppeteer"
+			"puppeteer",
+			"canvas",
+			"snyk"
 		]
 	}
 }
