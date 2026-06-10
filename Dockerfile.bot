@@ -1,0 +1,22 @@
+FROM node:22
+WORKDIR /app
+
+RUN corepack enable pnpm
+
+COPY amm_indexer/prisma ./amm_indexer/prisma
+COPY amm_indexer/package.json ./amm_indexer/
+COPY amm_indexer/pnpm-lock.yaml ./amm_indexer/
+
+WORKDIR /app/amm_indexer
+RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm run prisma:generate:sqlite
+
+# Now setup the telegram bot
+COPY telegram_bot /app/telegram_bot
+WORKDIR /app/telegram_bot
+
+RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild canvas prisma @prisma/client
+RUN pnpm exec prisma generate && pnpm run build
+
+CMD ["pnpm", "start"]
