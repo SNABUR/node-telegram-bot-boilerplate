@@ -73,6 +73,7 @@
 		"lowdb": "1.0.0",
 		"node-cache": "5.1.2",
 		"node-cron": "4.2.1",
+		"pg": "^8.21.0",
 		"postgres": "^3.4.9",
 		"puppeteer": "24.16.0",
 		"telegraf": "4.16.3",
