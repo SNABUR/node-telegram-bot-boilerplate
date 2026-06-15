@@ -3,8 +3,7 @@ import cron from "node-cron";
 import bot from "../functions/telegraf.js";
 import cache from "./cache.js";
 
-// Importar Drizzle y el esquema V2 en lugar de BotPrismaClient
-import { getDb, group_configuration, tokens_v2 } from '../db/drizzle';
+import { getDb, group_configuration } from '../db/drizzle';
 import { eq } from "drizzle-orm";
 
 // --- Configuración ---
@@ -17,7 +16,7 @@ const indexerPrisma = new IndexerPrismaClient();
 
 type ConfigWithToken = {
     config: typeof group_configuration.$inferSelect;
-    token: typeof tokens_v2.$inferSelect | null;
+    token: { id: string, symbol: string, decimals: number } | null;
 };
 
 /**
@@ -135,14 +134,29 @@ async function checkAllMonitors() {
         const rows = await db.select()
             .from(group_configuration)
             // @ts-ignore
-            .leftJoin(tokens_v2, eq(group_configuration.spikeMonitorTokenId, tokens_v2.id))
-            // @ts-ignore
             .where(eq(group_configuration.spikeMonitorEnabled, true));
 
-        const monitorsFromDb: ConfigWithToken[] = rows.map((r: any) => ({
-            config: r.group_configuration,
-            token: r.tokens_v2,
-        }));
+        const monitorsFromDb: ConfigWithToken[] = [];
+        
+        for (const r of rows) {
+            let tokenData = null;
+            if (r.spikeMonitorTokenId) {
+                try {
+                    // Fetch token data from Cloudflare D1
+                    const res = await fetch(`https://d1-sync-worker.promisesimetry.workers.dev/api/tokens?search=${r.spikeMonitorTokenId}`);
+                    const json = await res.json();
+                    if (json && json.data) {
+                        tokenData = json.data.find((t: any) => t.id === r.spikeMonitorTokenId) || null;
+                    }
+                } catch (e) {
+                    console.error(`Error fetching token info for ${r.spikeMonitorTokenId}:`, e);
+                }
+            }
+            monitorsFromDb.push({
+                config: r,
+                token: tokenData,
+            });
+        }
         
         cache.set(cacheKey, monitorsFromDb, 60);
         activeMonitors = monitorsFromDb;
