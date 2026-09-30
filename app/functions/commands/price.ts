@@ -17,11 +17,15 @@ export const price = async (): Promise<void> => {
             // Use the cached function to get the group configuration
 			const groupConfig = await getCachedGroupConfiguration(ctx.chat.id);
 
-			if (!groupConfig || !groupConfig.spikeMonitorToken) {
+			// Se lee `spikeMonitorTokenId` directamente en vez de la relation
+			// `spikeMonitorToken`: la relation exige la FK a la tabla local
+			// `tokens_v2` de Postgres, que se dejó de usar como fuente de verdad
+			// (la metadata ahora viene de D1) y ya no está sincronizada.
+			if (!groupConfig || !groupConfig.spikeMonitorTokenId) {
 				return ctx.reply('No token has been configured for this group. An admin can set one using /settoken <token_address>');
 			}
 
-			const tokenAddress = groupConfig.spikeMonitorToken.id;
+			const tokenAddress = groupConfig.spikeMonitorTokenId;
 			const timeframe = "5m"; // Default to 5m
 			await sendChart(ctx, tokenAddress, timeframe);
 

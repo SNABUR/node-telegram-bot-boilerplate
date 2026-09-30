@@ -11,6 +11,15 @@ export const BABYJOSH_TOKEN_ADDRESS = config.tokens.BABYJOSH_TOKEN_ADDRESS;
 
 /**
  * Retrieves token data from cache if available, otherwise fetches from the database.
+ *
+ * AVISO — esta NO es la fuente de verdad de identidad de tokens. La fuente de
+ * verdad es D1 vía `lib/hogletApi` (ver `getHogletTokenById`). Esta tabla local de
+ * Postgres se conserva solo para los campos que D1 no expone (`numId`,
+ * `circulatingSupply`, `maxSupply`, `wrappedAddress`) y que usan los botones de
+ * gráfico (`chart.ts`) y `calculateMarketCap`. Nadie la escribe: es un snapshot
+ * congelado de 65 filas, así que fuera de esos tokens `null` es la respuesta
+ * esperada, no un fallo. Para identidad/precio/símbolo usar `hogletApi`.
+ *
  * @param {string} tokenAddress The address of the token to retrieve.
  * @returns {Promise<TokensV2 | null>} The token data or null if not found.
  */
@@ -36,19 +45,21 @@ export const getCachedTokenByAddress = async (tokenAddress: string): Promise<Tok
 /**
  * Retrieves group configuration data from cache or database.
  * @param {number | string} chatId The ID of the chat group.
- * @returns {Promise<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null }) | null>} The group configuration or null.
+ * @returns {Promise<GroupConfiguration | null>} The group configuration or null.
  */
-export const getCachedGroupConfiguration = async (chatId: number | string): Promise<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null }) | null> => {
+export const getCachedGroupConfiguration = async (chatId: number | string): Promise<GroupConfiguration | null> => {
     const cacheKey = `group-config-${chatId}`;
-    const cachedConfig = cache.get<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null })>(cacheKey);
+    const cachedConfig = cache.get<GroupConfiguration>(cacheKey);
 
     if (cachedConfig) {
         return cachedConfig;
     }
 
+    // Sin `include: { spikeMonitorToken }`: esa relation depende de la FK a la
+    // tabla local `tokens_v2` de Postgres, que ya no es la fuente de verdad. Los
+    // consumidores leen `spikeMonitorTokenId` directamente.
     const configFromDb = await prisma.groupConfiguration.findUnique({
         where: { chatId: BigInt(chatId) },
-        include: { spikeMonitorToken: true },
     });
 
     if (configFromDb) {

@@ -2,6 +2,7 @@ import bot from "../telegraf.js";
 import { isAdmin } from '../helpers/isAdmin';
 import prisma from '../../lib/prisma';
 import cache from '../../lib/cache.js';
+import { getHogletTokenById } from '../../lib/hogletApi.js';
 
 /**
  * Invalidates all relevant caches for a given chat group.
@@ -43,12 +44,17 @@ export const settoken = async (): Promise<void> => {
     }
 
     try {
-      const token = await prisma.tokensV2.findFirst({
-        where: { id: tokenAddress },
-      });
+      // Validación contra D1 (`tokens_v2` del worker), la única fuente de verdad.
+      // Antes se validaba contra la tabla local de Postgres, que es un dataset
+      // viejo: aceptaba ids en formato legacy coin type que luego el monitor no
+      // podía resolver, y podía rechazar tokens que D1 sí conoce.
+      const token = await getHogletTokenById(tokenAddress);
 
       if (!token) {
-        return ctx.reply(`No token found with the address ${tokenAddress}.`);
+        return ctx.reply(
+          `No token found with the address ${tokenAddress} in the Hoglet token registry. ` +
+          `Use its canonical FA address (a plain 0x… address, not a 0x…::module::Name coin type).`
+        );
       }
 
       await prisma.groupConfiguration.upsert({

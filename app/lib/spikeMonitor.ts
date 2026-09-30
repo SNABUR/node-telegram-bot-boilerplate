@@ -1,7 +1,11 @@
+// `dotenv/config` explícito: este módulo lee process.env al evaluarse (constants
+// de módulo) y no debe depender de que otro módulo haya cargado dotenv antes.
+import "dotenv/config";
 import { PrismaClient as IndexerPrismaClient } from "../../../amm_indexer/prisma/generated/sqlite";
 import cron from "node-cron";
 import bot from "../functions/telegraf.js";
 import cache from "./cache.js";
+import { getHogletTokenById, HogletToken } from "./hogletApi.js";
 
 import { getDb, group_configuration } from '../db/drizzle';
 import { eq } from "drizzle-orm";
@@ -12,11 +16,18 @@ const INITIAL_LOOKBACK_MINUTES = 2; // Ventana para la primera vez que se ejecut
 const SPIKE_THRESHOLD_PERCENTAGE = 0; // 5%
 
 // --- Conexiones a las Bases de Datos ---
-const indexerPrisma = new IndexerPrismaClient();
+// El cliente SQLite del indexer tiene `url = "file:./dev.db"` LITERAL en su schema
+// (no lee env), así que la ruta se resuelve contra process.cwd() y pm2 no define
+// cwd en ecosystem.config.js. Con INDEXER_SQLITE_PATH se puede fijar absoluta en
+// el VPS; sin la variable el comportamiento actual no cambia.
+const INDEXER_SQLITE_PATH = process.env.INDEXER_SQLITE_PATH;
+const indexerPrisma = INDEXER_SQLITE_PATH
+    ? new IndexerPrismaClient({ datasources: { db: { url: `file:${INDEXER_SQLITE_PATH}` } } })
+    : new IndexerPrismaClient();
 
 type ConfigWithToken = {
     config: typeof group_configuration.$inferSelect;
-    token: { id: string, symbol: string, decimals: number } | null;
+    token: HogletToken | null;
 };
 
 /**
@@ -139,17 +150,14 @@ async function checkAllMonitors() {
         const monitorsFromDb: ConfigWithToken[] = [];
         
         for (const r of rows) {
-            let tokenData = null;
+            let tokenData: HogletToken | null = null;
             if (r.spikeMonitorTokenId) {
-                try {
-                    // Fetch token data from Cloudflare D1
-                    const res = await fetch(`https://d1-sync-worker.promisesimetry.workers.dev/api/tokens?search=${r.spikeMonitorTokenId}`);
-                    const json = await res.json();
-                    if (json && json.data) {
-                        tokenData = json.data.find((t: any) => t.id === r.spikeMonitorTokenId) || null;
-                    }
-                } catch (e) {
-                    console.error(`Error fetching token info for ${r.spikeMonitorTokenId}:`, e);
+                tokenData = await getHogletTokenById(r.spikeMonitorTokenId);
+                if (!tokenData) {
+                    console.error(
+                        `[spikeMonitor] No se pudo resolver el token ${r.spikeMonitorTokenId} ` +
+                        `(grupo ${r.chatId}). El monitor queda inactivo para este grupo.`
+                    );
                 }
             }
             monitorsFromDb.push({
