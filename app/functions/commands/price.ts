@@ -21,7 +21,7 @@ export const price = async (): Promise<void> => {
 				return ctx.reply('No token has been configured for this group. An admin can set one using /settoken <token_address>');
 			}
 
-			const tokenAddress = groupConfig.spikeMonitorToken.address;
+			const tokenAddress = groupConfig.spikeMonitorToken.id;
 			const timeframe = "5m"; // Default to 5m
 			await sendChart(ctx, tokenAddress, timeframe);
 

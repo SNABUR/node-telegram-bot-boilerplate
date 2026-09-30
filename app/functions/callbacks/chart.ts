@@ -23,13 +23,13 @@ export const chartCallback = async (): Promise<void> => {
 		const tokenId = parseInt(parts[2], 10);
 		let timeframe = parts[3];
 
-		const token = await prisma.token.findUnique({ where: { id: tokenId } });
+		const token = await prisma.tokensV2.findUnique({ where: { numId: BigInt(tokenId) } });
 		if (!token) {
 			ctx.answerCbQuery("Token not found.");
 			return;
 		}
 
-		const tokenAddress = token.address;
+		const tokenAddress = token.id;
 
 		if (action === "refresh") {
 			await sendChart(ctx, tokenAddress, timeframe, true);

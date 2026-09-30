@@ -35,53 +35,39 @@ model EventTracking {
     @@index([network, processed])
 }
 
-model Token {
-    id      Int    @id @default(autoincrement())
-    network String
-
-    address        String
-    wrappedAddress String? @unique
-
-    symbol            String
+model TokensV2 {
+    id                String   @id
+    numId             BigInt   @unique @default(autoincrement())
+    network           String
     name              String
+    symbol            String
     decimals          Int
+    wrappedAddress    String?
     maxSupply         BigInt?
     circulatingSupply BigInt?
+    minTradeVolume    Decimal?
+    createdAt         DateTime @default(now())
 
-    pairsAsToken0 Pair[] @relation("token0")
-    pairsAsToken1 Pair[] @relation("token1")
-
-    // Relación a configuraciones de grupo que usan este token
     groupConfigurations GroupConfiguration[]
 
-    createdAt DateTime @default(now())
-
-    @@unique([network, address])
+    @@map("tokens_v2")
+    @@index([network, symbol])
 }
 
-model Pair {
-    id Int @id @default(autoincrement())
+model AmmpairV2 {
+    id            String   @id
+    pair          String
+    network       String
+    creator       String
+    token0Address String
+    token1Address String
+    lpFeePercent  Decimal  @db.Decimal(10, 4)
+    verified      Boolean  @default(false)
+    displayOrder  Int      @default(0)
+    createdAt     DateTime @default(now())
 
-    network String
-
-    token0Id Int
-    token1Id Int
-
-    spikeyAmmPairAddress String?
-
-    spikeyAmmReserve0 BigInt?
-    spikeyAmmReserve1 BigInt?
-    lastStatsUpdate   DateTime?
-
-    token0 Token @relation("token0", fields: [token0Id], references: [id])
-    token1 Token @relation("token1", fields: [token1Id], references: [id])
-
-    createdAt DateTime @default(now())
-
-    @@unique([network, token0Id, token1Id])
-    @@unique([network, spikeyAmmPairAddress])
-    @@index([token0Id])
-    @@index([token1Id])
+    @@unique([pair, network])
+    @@map("ammpair_v2")
 }
 
 model OhlcData {
@@ -112,19 +98,17 @@ model OhlcData {
     @@index([network, token0Address, token1Address, timeframe, timestamp(sort: Desc)])
 }
 
-// Modelo modificado para la configuración de un grupo
+// V2: group_configuration (spikeMonitorTokenId = token address, FK -> tokens_v2.id)
 model GroupConfiguration {
-    // El ID del chat de Telegram ahora es la clave primaria.
-    chatId BigInt @id
-
-    // Campos para el monitor de Spikes
+    chatId                BigInt  @id
     spikeMonitorEnabled   Boolean @default(false)
-    spikeMonitorTokenId   Int? // El token a monitorear
-    spikeMonitorThreadId  String? // El "topic" o hilo donde se notificará
-    spikeMonitorGifUrl    String? // URL del GIF para las notificaciones
-    spikeMonitorTimeframe Int?    @default(2) // Ventana de tiempo en minutos
-    spikeMonitorInterval  Int?    @default(30) // Intervalo de chequeo en segundos
+    spikeMonitorTokenId   String? // Token ADDRESS to monitor
+    spikeMonitorThreadId  String?
+    spikeMonitorGifUrl    String?
+    spikeMonitorTimeframe Int?    @default(2)
+    spikeMonitorInterval  Int?    @default(30)
 
-    // Relación con el token a monitorear
-    spikeMonitorToken Token? @relation(fields: [spikeMonitorTokenId], references: [id])
+    spikeMonitorToken TokensV2? @relation(fields: [spikeMonitorTokenId], references: [id])
+
+    @@map("group_configuration")
 }

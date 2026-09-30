@@ -43,8 +43,8 @@ export const settoken = async (): Promise<void> => {
     }
 
     try {
-      const token = await prisma.token.findFirst({
-        where: { address: tokenAddress },
+      const token = await prisma.tokensV2.findFirst({
+        where: { id: tokenAddress },
       });
 
       if (!token) {
@@ -59,7 +59,7 @@ export const settoken = async (): Promise<void> => {
 
       invalidateGroupCache(ctx.chat.id);
 
-      await ctx.reply(`The token for the spike monitor has been set to: ${token.symbol} (${token.address})`);
+      await ctx.reply(`The token for the spike monitor has been set to: ${token.symbol} (${token.id})`);
     } catch (error) {
       console.error(error);
       await ctx.reply('An error occurred while setting the token.');

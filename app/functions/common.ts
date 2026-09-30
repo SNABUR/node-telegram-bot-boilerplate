@@ -1,7 +1,7 @@
 import config from "../configs/config.js";
 import prisma from "../lib/prisma.js";
 import cache from "../lib/cache.js";
-import { Prisma, Token, GroupConfiguration } from "../../dist/generated/supabase";
+import { Prisma, TokensV2, GroupConfiguration } from "../../dist/generated/supabase";
 import { getSupraPriceInUSD } from "../lib/supra.js";
 
 export const SUPRA_COIN_ADDRESS = config.tokens.SUPRA_COIN_ADDRESS;
@@ -12,18 +12,18 @@ export const BABYJOSH_TOKEN_ADDRESS = config.tokens.BABYJOSH_TOKEN_ADDRESS;
 /**
  * Retrieves token data from cache if available, otherwise fetches from the database.
  * @param {string} tokenAddress The address of the token to retrieve.
- * @returns {Promise<Token | null>} The token data or null if not found.
+ * @returns {Promise<TokensV2 | null>} The token data or null if not found.
  */
-export const getCachedTokenByAddress = async (tokenAddress: string): Promise<Token | null> => {
+export const getCachedTokenByAddress = async (tokenAddress: string): Promise<TokensV2 | null> => {
     const cacheKey = `token-${tokenAddress}`;
-    const cachedToken = cache.get<Token>(cacheKey);
+    const cachedToken = cache.get<TokensV2>(cacheKey);
 
     if (cachedToken) {
         return cachedToken;
     }
 
-    const tokenFromDb = await prisma.token.findFirst({
-        where: { address: tokenAddress },
+    const tokenFromDb = await prisma.tokensV2.findFirst({
+        where: { id: tokenAddress },
     });
 
     if (tokenFromDb) {
@@ -36,11 +36,11 @@ export const getCachedTokenByAddress = async (tokenAddress: string): Promise<Tok
 /**
  * Retrieves group configuration data from cache or database.
  * @param {number | string} chatId The ID of the chat group.
- * @returns {Promise<(GroupConfiguration & { spikeMonitorToken: Token | null }) | null>} The group configuration or null.
+ * @returns {Promise<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null }) | null>} The group configuration or null.
  */
-export const getCachedGroupConfiguration = async (chatId: number | string): Promise<(GroupConfiguration & { spikeMonitorToken: Token | null }) | null> => {
+export const getCachedGroupConfiguration = async (chatId: number | string): Promise<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null }) | null> => {
     const cacheKey = `group-config-${chatId}`;
-    const cachedConfig = cache.get<(GroupConfiguration & { spikeMonitorToken: Token | null })>(cacheKey);
+    const cachedConfig = cache.get<(GroupConfiguration & { spikeMonitorToken: TokensV2 | null })>(cacheKey);
 
     if (cachedConfig) {
         return cachedConfig;

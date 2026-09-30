@@ -41,7 +41,7 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 			return;
 		}
 
-		const [sortedAddress0, sortedAddress1] = [supraCoin.address, targetToken.address].sort();
+		const [sortedAddress0, sortedAddress1] = [supraCoin.id, targetToken.id].sort();
 
 		// Fetch OHLC data
 		const ohlcData = await prisma.ohlcData.findMany({
@@ -99,13 +99,13 @@ export const sendChart = async (ctx: any, tokenAddress: string, timeframe: strin
 				[
 					{
 						text: "🔄 Refresh",
-						callback_data: `chart_refresh_${targetToken.id}_${timeframe}`,
+						callback_data: `chart_refresh_${targetToken.numId}_${timeframe}`,
 					},
 				],
 				[
-					{ text: "5m", callback_data: `chart_timeframe_${targetToken.id}_5m` },
-					{ text: "1h", callback_data: `chart_timeframe_${targetToken.id}_1h` },
-					{ text: "1d", callback_data: `chart_timeframe_${targetToken.id}_1d` },
+					{ text: "5m", callback_data: `chart_timeframe_${targetToken.numId}_5m` },
+					{ text: "1h", callback_data: `chart_timeframe_${targetToken.numId}_1h` },
+					{ text: "1d", callback_data: `chart_timeframe_${targetToken.numId}_1d` },
 				],
 			],
 		};
